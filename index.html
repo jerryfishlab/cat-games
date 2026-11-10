@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猫猫小游戏集合</title>
+<style>
+  :root{--ink:#3d3242;--ink2:#7a6d80;--peach:#ff9d76;--pink:#ff7fa8;--purple:#9d7bde}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;color:var(--ink);
+    background:radial-gradient(900px 500px at 10% -10%,#ffe9d6 0%,transparent 60%),
+      radial-gradient(900px 500px at 95% 0%,#ffe1ec 0%,transparent 55%),
+      radial-gradient(700px 500px at 50% 110%,#e6f7f0 0%,transparent 60%),#fff7ee;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px;
+  }
+  .wrap{max-width:820px;width:100%}
+  .head{text-align:center;margin-bottom:28px}
+  .head .paw{font-size:40px}
+  .head h1{font-size:clamp(24px,5vw,34px);letter-spacing:1px;margin-top:6px}
+  .head h1 em{font-style:normal;color:var(--pink)}
+  .head p{color:var(--ink2);font-size:14px;margin-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  a.card{
+    display:block;text-decoration:none;color:inherit;background:#fff;border-radius:24px;padding:26px 24px;
+    box-shadow:0 12px 30px rgba(190,140,110,.16);border:1px solid #fff;transition:.2s;position:relative;overflow:hidden;
+  }
+  a.card:hover{transform:translateY(-5px);box-shadow:0 18px 40px rgba(190,140,110,.24)}
+  a.card::after{content:"";position:absolute;right:-40px;top:-40px;width:130px;height:130px;border-radius:50%;background:#fff4ea;z-index:0}
+  .card .inner{position:relative;z-index:1}
+  .card .emo{font-size:44px}
+  .card h2{font-size:20px;margin:10px 0 6px}
+  .card p{font-size:13.5px;color:var(--ink2);line-height:1.75}
+  .card .go{display:inline-block;margin-top:14px;font-size:13px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--peach),var(--pink));padding:8px 20px;border-radius:999px}
+  .card.alt .go{background:linear-gradient(135deg,#8fb8ea,var(--purple))}
+  .foot{text-align:center;color:#c1b0bc;font-size:12px;margin-top:26px;line-height:1.9}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="paw">🐾</div>
+    <h1>猫猫<em>小游戏</em>集合</h1>
+    <p>点开就玩 · 手机上也能玩 · 数据全在你手机里，不上传任何服务器</p>
+  </div>
+  <div class="cards">
+    <a class="card" href="cat-fight-game.html">
+      <div class="inner">
+        <div class="emo">🐱✊🐶</div>
+        <h2>猫咪揍狗大作战</h2>
+        <p>选一只猫（三花 / 加菲 / 德文 / 戴帽 / 暹罗），5 关限时按顺序揍狗。10 种狗随机乱入，越打越快越肉，超时就失败！</p>
+        <span class="go">开始揍狗 →</span>
+      </div>
+    </a>
+    <a class="card alt" href="cat-personality-test.html">
+      <div class="inner">
+        <div class="emo">🔮😻</div>
+        <h2>小猫性格测试</h2>
+        <p>上传猫照 + 回答 30 道日常观察题，生成它的 Q 版立绘、性格故事，还有未来运势报告，可保存图片。</p>
+        <span class="go">测测我的猫 →</span>
+      </div>
+    </a>
+  </div>
+  <div class="foot">纯属自娱自乐，不盈利、不收集任何数据<br>© 猫猫小游戏集合</div>
+</div>
+</body>
+</html>
