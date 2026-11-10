@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>喵性格研究所 · 小猫性格测试</title>
+<style>
+  :root{
+    --bg1:#fff7ee; --bg2:#ffeef4;
+    --card:#ffffff;
+    --ink:#3d3242; --ink2:#7a6d80;
+    --peach:#ff9d76; --pink:#ff7fa8; --purple:#9d7bde; --mint:#5ec9a7; --yellow:#ffc94d; --blue:#6fa8e8;
+    --line:#f0e4dc;
+    --shadow:0 10px 30px rgba(190,140,110,.14);
+    --r:22px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(900px 500px at 10% -10%, #ffe9d6 0%, transparent 60%),
+      radial-gradient(900px 500px at 95% 0%, #ffe1ec 0%, transparent 55%),
+      radial-gradient(700px 500px at 50% 110%, #e6f7f0 0%, transparent 60%),
+      var(--bg1);
+    min-height:100vh;
+    padding:24px 16px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  .logo{text-align:center;margin:18px 0 6px}
+  .logo .paw{font-size:34px}
+  .logo h1{font-size:30px;letter-spacing:2px}
+  .logo h1 em{font-style:normal;color:var(--pink)}
+  .logo p{color:var(--ink2);font-size:14px;margin-top:6px}
+  .steps{display:flex;justify-content:center;gap:6px;margin:14px 0 22px}
+  .steps span{font-size:12px;color:#b9a9b4;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .steps span.on{background:var(--pink);color:#fff;border-color:var(--pink);font-weight:700}
+
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:26px;border:1px solid #fff}
+  .screen{display:none;animation:pop .35s ease}
+  .screen.active{display:block}
+  @keyframes pop{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* 上传 */
+  .drop{
+    border:2.5px dashed #f2c4ad;border-radius:18px;background:#fffaf5;
+    padding:34px 20px;text-align:center;cursor:pointer;transition:.2s;
+  }
+  .drop:hover{background:#fff3e9;border-color:var(--peach)}
+  .drop .big{font-size:44px}
+  .drop h3{margin:8px 0 4px;font-size:17px}
+  .drop p{font-size:13px;color:var(--ink2)}
+  #photoPreview{display:none;text-align:center}
+  .photo-frame{
+    display:inline-block;position:relative;padding:10px;border-radius:20px;
+    background:linear-gradient(135deg,#ffe6d2,#ffe0ec);box-shadow:var(--shadow);
+  }
+  .photo-frame img{display:block;max-width:280px;max-height:280px;border-radius:14px;object-fit:cover}
+  .photo-frame .tag{position:absolute;top:-12px;right:-12px;background:#fff;border-radius:50%;padding:8px;font-size:20px;box-shadow:var(--shadow)}
+  .h2{font-size:19px;margin-bottom:14px;text-align:center}
+  .h2 .sub{display:block;font-size:13px;color:var(--ink2);font-weight:400;margin-top:4px}
+
+  /* 品种 */
+  .breed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:16px}
+  .breed{
+    border:2px solid var(--line);border-radius:16px;padding:12px 6px;text-align:center;cursor:pointer;
+    transition:.15s;background:#fffdfb;
+  }
+  .breed:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+  .breed.sel{border-color:var(--pink);background:#fff0f5}
+  .breed .sw{width:34px;height:34px;border-radius:50%;margin:0 auto 6px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .breed b{font-size:13px;display:block}
+  .btn{
+    display:inline-block;border:none;cursor:pointer;font-size:16px;font-weight:700;color:#fff;
+    background:linear-gradient(135deg,var(--peach),var(--pink));
+    padding:13px 34px;border-radius:999px;box-shadow:0 8px 20px rgba(255,127,168,.35);transition:.2s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn.ghost{background:#fff;color:var(--ink2);box-shadow:none;border:1.5px solid var(--line);font-weight:600}
+  .center{text-align:center;margin-top:20px}
+
+  /* 题目 */
+  .prog{height:10px;background:#f6ebe4;border-radius:99px;overflow:hidden;margin-bottom:8px}
+  .prog i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--peach),var(--pink));transition:.3s}
+  .prog-label{font-size:12px;color:var(--ink2);text-align:right;margin-bottom:14px}
+  .q-num{font-size:13px;color:var(--pink);font-weight:700;letter-spacing:2px}
+  .q-text{font-size:20px;font-weight:700;margin:8px 0 20px}
+  .opts{display:flex;flex-direction:column;gap:10px}
+  .opt{
+    text-align:left;border:2px solid var(--line);background:#fffdfb;border-radius:14px;
+    padding:13px 16px;font-size:15px;cursor:pointer;transition:.15s;display:flex;gap:10px;align-items:center;
+  }
+  .opt:hover{border-color:var(--peach);background:#fff7f1}
+  .opt .dot{width:26px;height:26px;border-radius:50%;background:#f6ebe4;display:flex;align-items:center;justify-content:center;font-size:13px;color:#b9a9b4;flex:none}
+  .q-nav{display:flex;justify-content:space-between;margin-top:18px}
+
+  /* 结果 */
+  .result-head{
+    background:linear-gradient(135deg,#ffe9d8,#ffe3ef 60%,#e9e0ff);
+    border-radius:var(--r);padding:26px;text-align:center;box-shadow:var(--shadow);
+  }
+  .compare{display:flex;gap:16px;justify-content:center;align-items:flex-end;flex-wrap:wrap;margin:14px 0}
+  .compare .col{text-align:center}
+  .compare .col b{font-size:13px;color:var(--ink2);display:block;margin-top:8px}
+  #chibiBox svg{width:230px;height:230px;filter:drop-shadow(0 10px 16px rgba(200,130,90,.25))}
+  .arch-badge{
+    display:inline-block;background:#fff;border-radius:999px;padding:9px 22px;font-size:18px;font-weight:800;
+    color:var(--pink);box-shadow:var(--shadow);margin-top:6px;
+  }
+  .result-head h2{font-size:24px;margin-top:10px}
+  .result-head .desc{color:var(--ink2);font-size:14px;margin-top:6px}
+  .sec-title{font-size:18px;font-weight:800;margin:30px 0 14px;display:flex;align-items:center;gap:8px}
+  .sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
+  .dim{margin-bottom:14px}
+  .dim .row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px}
+  .dim .bar{height:12px;background:#f6ebe4;border-radius:99px;overflow:hidden}
+  .dim .bar i{display:block;height:100%;border-radius:99px;width:0;transition:width .8s ease}
+  .story{line-height:1.9;font-size:15px;background:#fffaf3;border-radius:16px;padding:20px;border:1px solid #f7ecdf}
+  .story p{margin-bottom:10px}
+  .story p:last-child{margin-bottom:0}
+  .fortune-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .fcell{background:#fffaf3;border:1px solid #f7ecdf;border-radius:14px;padding:14px;text-align:center}
+  .fcell b{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:6px}
+  .fcell .stars{color:var(--yellow);font-size:15px;letter-spacing:2px}
+  .fcell .val{font-size:15px;font-weight:800}
+  .fortune-quote{
+    margin-top:14px;background:linear-gradient(135deg,#fff4e0,#ffe9f1);border-radius:14px;padding:16px 18px;
+    font-size:15px;line-height:1.8;
+  }
+  .yiji{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .yiji div{border-radius:14px;padding:14px;font-size:14px;line-height:1.8}
+  .yiji .yi{background:#eafaf2;border:1px solid #cdeede}
+  .yiji .ji{background:#fdeeee;border:1px solid #f6d5d5}
+  .yiji b{display:block;margin-bottom:4px}
+  .hint{text-align:center;color:#c5b4c0;font-size:12px;margin-top:26px}
+  @media (max-width:520px){ .q-text{font-size:17px} #chibiBox svg{width:200px;height:200px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="paw">🐾</div>
+    <h1>喵性格<em>研究所</em></h1>
+    <p>上传一张小猫照片，回答 30 道日常观察题，解锁它的Q版人格档案 & 运势报告</p>
+  </div>
+  <div class="steps">
+    <span id="st1" class="on">① 上传照片</span><span id="st2">② 选品种</span><span id="st3">③ 答题</span><span id="st4">④ 结果</span>
+  </div>
+
+  <!-- ============ 第1步：上传 ============ -->
+  <div class="screen card active" id="scr1">
+    <h2 class="h2">先让本所看看你的猫 <span class="sub">照片会出现在最终的档案卡上，和Q版图并列对比～</span></h2>
+    <div class="drop" id="drop" onclick="document.getElementById('file').click()">
+      <div class="big">📷</div>
+      <h3>点击上传小猫照片</h3>
+      <p>支持 JPG / PNG，照片只在你本地浏览器中处理，不会上传到任何服务器</p>
+    </div>
+    <input type="file" id="file" accept="image/*" hidden>
+    <div id="photoPreview">
+      <div class="photo-frame">
+        <span class="tag">😻</span>
+        <img id="previewImg" alt="猫咪照片">
+      </div>
+      <div class="center"><button class="btn" onclick="toBreed()">就是它了，下一步 →</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 第2步：选品种 ============ -->
+  <div class="screen card" id="scr2">
+    <h2 class="h2">选一个最接近的品种 <span class="sub">Q版图的毛色、花纹和眼睛都会按品种绘制，不确定就选最像的那个</span></h2>
+    <div class="breed-grid" id="breedGrid"></div>
+    <div class="center">
+      <button class="btn ghost" onclick="go(1)">← 返回</button>
+      <button class="btn" id="breedBtn" onclick="startQuiz()" disabled>确定，开始答题 →</button>
+    </div>
+  </div>
+
+  <!-- ============ 第3步：答题 ============ -->
+  <div class="screen card" id="scr3">
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="prog-label"><span id="progNum">1 / 30</span></div>
+    <div class="q-num" id="qNum"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="opts" id="opts"></div>
+    <div class="q-nav">
+      <button class="btn ghost" id="prevBtn" onclick="prevQ()">← 上一题</button>
+      <span style="align-self:center;color:#d9c8d3">🐱 专心想想它平时的样子</span>
+    </div>
+  </div>
+
+  <!-- ============ 第4步：结果 ============ -->
+  <div class="screen" id="scr4">
+    <div class="result-head">
+      <div style="font-size:13px;letter-spacing:4px;color:#a08bb8">MEOW PERSONALITY REPORT</div>
+      <h2 id="archName"></h2>
+      <div class="arch-badge" id="archBadge"></div>
+      <div class="desc" id="archDesc"></div>
+      <div class="compare">
+        <div class="col"><div class="photo-frame"><img id="resultPhoto" style="max-width:150px;max-height:150px" alt="原图"></div><b>本尊</b></div>
+        <div class="col"><div id="chibiBox"></div><b>Q版立绘</b></div>
+      </div>
+      <button class="btn ghost" onclick="downloadChibi()">⬇️ 保存Q版立绘 PNG</button>
+    </div>
+
+    <div class="sec-title">📊 性格维度图谱</div>
+    <div class="card" id="dimChart"></div>
+
+    <div class="sec-title">📖 它的性格故事</div>
+    <div class="card"><div class="story" id="storyBox"></div></div>
+
+    <div class="sec-title">🔮 未来运势报告</div>
+    <div class="card">
+      <div class="fortune-grid" id="fortuneGrid"></div>
+      <div class="fortune-quote" id="fortuneQuote"></div>
+      <div class="yiji">
+        <div class="yi" id="yiBox"></div>
+        <div class="ji" id="jiBox"></div>
+      </div>
+    </div>
+
+    <div class="center">
+      <button class="btn" onclick="location.reload()">🔁 再测一只猫</button>
+    </div>
+    <p class="hint">* 本报告由喵性格研究所（虚拟机构）出具，仅供娱乐，猫主子的真实性格以它说了算为准。</p>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   品种库：定义Q版图的毛色/花纹/眼睛
+============================================================ */
+const BREEDS = [
+  {id:"orange", name:"橘猫", sw:"linear-gradient(135deg,#F5A65B,#E08A3C)", base:"#F5A65B", stripe:"#E08A3C", belly:"#FFE3C2", eye:"#8B5E3C", pattern:"tabby", inner:"#FFD9BC"},
+  {id:"lihua", name:"狸花猫", sw:"linear-gradient(135deg,#9C8468,#6B5644)", base:"#9C8468", stripe:"#5F4C3A", belly:"#E8D9C5", eye:"#C9A227", pattern:"tabby", inner:"#E8C4A8"},
+  {id:"british", name:"英短蓝猫", sw:"linear-gradient(135deg,#8B99AD,#6E7C90)", base:"#8B99AD", stripe:null, belly:"#B4BfCC", eye:"#E8A33D", pattern:"solid", inner:"#C6CFDA"},
+  {id:"american", name:"美短", sw:"linear-gradient(135deg,#C4BFB6,#6E6A63)", base:"#C4BFB6", stripe:"#6E6A63", belly:"#EFECE6", eye:"#D98E32", pattern:"tabby", inner:"#F0D5C2"},
+  {id:"ragdoll", name:"布偶猫", sw:"linear-gradient(135deg,#F2ECE8,#8C6E5B)", base:"#F2ECE8", stripe:"#8C6E5B", belly:"#FBF7F4", eye:"#5B8FD9", pattern:"points", inner:"#D9B8A4"},
+  {id:"siamese", name:"暹罗猫", sw:"linear-gradient(135deg,#E8DCCB,#5C4A3D)", base:"#E8DCCB", stripe:"#5C4A3D", belly:"#F2EAD9", eye:"#4E8FD9", pattern:"points", inner:"#C4A48C"},
+  {id:"calico", name:"三花猫", sw:"conic-gradient(#F5A65B 0 33%,#3A3A3E 33% 66%,#fff 66%)", base:"#FDFBF8", stripe:"#3A3A3E", belly:"#FDFBF8", eye:"#C9A227", pattern:"patches", patch2:"#F5A65B", inner:"#FFD9BC"},
+  {id:"black", name:"黑猫", sw:"linear-gradient(135deg,#4A4A50,#2C2C30)", base:"#3E3E44", stripe:null, belly:"#5A5A62", eye:"#F2C94C", pattern:"solid", inner:"#8A7A9A"},
+  {id:"white", name:"白猫", sw:"linear-gradient(135deg,#FFFFFF,#EDEDF2)", base:"#FDFDFD", stripe:null, belly:"#FFFFFF", eye:"#7FB2E5", pattern:"solid", inner:"#FFD9E2"},
+  {id:"cow", name:"奶牛猫", sw:"linear-gradient(135deg,#fff,#2C2C30)", base:"#FDFDFD", stripe:"#2C2C30", belly:"#FDFDFD", eye:"#C9A227", pattern:"patches", patch2:"#2C2C30", inner:"#FFD9BC"},
+  {id:"persian", name:"波斯猫", sw:"linear-gradient(135deg,#F6EBD6,#E3CBA4)", base:"#F6EBD6", stripe:null, belly:"#FBF4E6", eye:"#C9A227", pattern:"solid", inner:"#FFDCC4", flat:true},
+  {id:"sphynx", name:"无毛猫", sw:"linear-gradient(135deg,#E8B8A8,#D9A08C)", base:"#E8B8A8", stripe:null, belly:"#F2CDBE", eye:"#7FB2E5", pattern:"solid", inner:"#F2CDBE", naked:true},
+];
+
+/* ============================================================
+   30 道题：5 个维度 × 6 题，选项 1~4 分
+============================================================ */
+const DIMS = {
+  energy:{name:"活力指数", color:"#FF9D76", icon:"⚡"},
+  affection:{name:"亲人指数", color:"#FF7FA8", icon:"💗"},
+  courage:{name:"胆量指数", color:"#6FA8E8", icon:"🛡️"},
+  foodie:{name:"干饭指数", color:"#FFC94D", icon:"🍚"},
+  sass:{name:"傲娇指数", color:"#9D7BDE", icon:"👑"},
+};
+const QUESTIONS = [
+  // 活力 energy
+  {d:"energy", t:"凌晨三点，它通常在……", o:["睡得像块石头，雷打不动","翻个身继续睡","在屋里溜达巡逻","疯狂跑酷，比如你脑门"]},
+  {d:"energy", t:"你拿出逗猫棒时，它会……", o:["眼皮都懒得抬","看两眼，意思一下","追着玩一小会儿","原地起飞，扑到你手酸"]},
+  {d:"energy", t:"从沙发到柜顶这段路，它一般……", o:["绕道走，能躺不站","慢悠悠踱步","轻盈一跳就上","飞檐走壁如履平地"]},
+  {d:"energy", t:"白天大部分时间它在……", o:["睡，深度睡眠那种","睡 + 换个地方晒太阳","趴窗台看外面的鸟","巡视领地，忙得很"]},
+  {d:"energy", t:"家里来了个新快递箱，它……", o:["毫无兴趣","过去闻一闻","直接坐进去占位","钻进去又咬又踢，嗨翻了"]},
+  {d:"energy", t:"一只玩具老鼠的寿命大约是……", o:["原封不动直到落灰","偶尔被拨弄两下","玩着玩着就找不到了","三天内被大卸八块"]},
+  // 亲人 affection
+  {d:"affection", t:"你回家开门的那一刻，它……", o:["没反应，继续做自己的事","起身看一眼是谁","小跑到门口","喵喵大叫，绕腿蹭个不停"]},
+  {d:"affection", t:"你想抱它的时候，它会……", o:["扭动逃跑，动作要快","勉强忍受三秒","放松地趴在你怀里","主动跳进你怀里求抱"]},
+  {d:"affection", t:"晚上睡觉它睡在哪？", o:["床底 / 柜顶，离你远远的","床脚附近","钻进你的被窝","直接睡你枕头上或身上"]},
+  {d:"affection", t:"你难过叹气的时候，它会……", o:["完全没发现","远远地看着你","走过来蹭蹭你","舔你、贴着你，寸步不离"]},
+  {d:"affection", t:"有陌生客人来家里，它……", o:["瞬间消失，找半天找不到","在高处远远观察","凑近闻一闻","主动去蹭客人的腿"]},
+  {d:"affection", t:"你叫它名字时，它会……", o:["就当没听见","耳朵动一下，人不动","看你一眼，爱答不理","边喵边跑过来"]},
+  // 胆量 courage
+  {d:"courage", t:"吸尘器突然启动，它……", o:["一秒窜进床底","炸毛躲到远处","警惕地盯着它","原地坐着，淡定看戏"]},
+  {d:"courage", t:"第一次出门（比如去医院），它……", o:["在包里抖成筛子","喵喵叫一路","好奇地四处张望","出包就想探索整个诊室"]},
+  {d:"courage", t:"一根黄瓜悄悄出现在它身后，它……", o:["原地起飞，垂直弹射","吓一跳然后哈气警告","回头看看，一脸问号","闻闻，考虑能不能吃"]},
+  {d:"courage", t:"窗外路过一只大型犬，它……", o:["吓得躲起来","藏到沙发后面观察","隔着玻璃与它对峙","完全波澜不惊"]},
+  {d:"courage", t:"新家具搬进家的第一天，它……", o:["警惕三天不敢靠近","远远观察半天","第一个爬上去宣布主权","全程在场监督安装"]},
+  {d:"courage", t:"外面打雷的时候，它……", o:["钻被窝最深处","缩在角落里发抖","来找你贴贴求安慰","翻个身继续睡"]},
+  // 干饭 foodie
+  {d:"foodie", t:"到了饭点你还没开饭，它会……", o:["无所谓，继续睡","过来提醒你一声","坐在碗边死死盯着你","喵到开饭为止，还要咬你裤脚"]},
+  {d:"foodie", t:"你在吃东西的时候，它……", o:["不感兴趣","坐在旁边看着你","凑过来嗅来嗅去","直接伸爪去抢"]},
+  {d:"foodie", t:"换了一款新猫粮，它……", o:["绝食抗议到你看它可怜","闻闻再说，勉强尝尝","试吃两口，还行吧","激动得直接埋头猛炫"]},
+  {d:"foodie", t:"对冻干的态度，它是……", o:["不吃，谢喵","挑着吃，很挑","非常爱吃","听见袋子响就闪电飞奔过来"]},
+  {d:"foodie", t:"它的吃饭速度是……", o:["一天磕几次，少吃多餐","细嚼慢咽，很有仪态","正常速度","三秒干完，碗都能舔穿"]},
+  {d:"foodie", t:"它的身材管理现状……", o:["偏瘦，怎么吃都不胖","标准身材","微微圆润","圆润——医生说该减肥了"]},
+  // 傲娇 sass
+  {d:"sass", t:"你想摸它头的时候，它会……", o:["张嘴就咬（轻轻的）","躲开，不给你机会","忍一下，勉强配合","主动蹭进你手心"]},
+  {d:"sass", t:"它主动来找你贴贴之后……", o:["五秒后潇洒走人","趴一小会儿就走","翻出肚皮给你摸","踩奶+呼噜，赖着不走了"]},
+  {d:"sass", t:"总的来说，它对你的态度是……", o:["高冷主子，你只是铲屎的","偶尔赏脸宠幸一下","平易近人，好猫一枚","全看它当天心情"]},
+  {d:"sass", t:"它闯祸被你凶了之后，会……", o:["反过来凶你，声音更大","摆出无辜脸看戏","委屈巴巴地低下头","当场睡着，装无事发生"]},
+  {d:"sass", t:"给它拍照时的配合度……", o:["看见镜头就跑","永远虚焦 / 背影大师","勉强配合几张","镜头感极佳，自来熟"]},
+  {d:"sass", t:"它蹭你的频率是……", o:["从不蹭，从不","想起来才蹭一下","经常蹭，蹭腿蹭手","每天狂蹭还留口水，宣示主权"]},
+];
+
+/* ============================================================
+   性格原型：top2 维度组合 → 10 种原型
+============================================================ */
+const PAIR_KEY = (a,b)=>[a,b].sort().join("+");
+const ARCHETYPES = {
+  "energy+foodie":   {name:"碗中战神", emoji:"🍚⚔️", desc:"一天消耗的能量等于一顿饭的热量", tagline:"跑酷是为了更快到达饭碗"},
+  "energy+affection":{name:"团宠外交官", emoji:"💃💖", desc:"全小区最会撒娇的社交悍匪", tagline:"见谁都能贴，贴完继续疯"},
+  "courage+energy":  {name:"无敌冒险家", emoji:"🧭⚡", desc:"家里的每寸高处都留下了它的爪印", tagline:"没有它不敢跳的柜顶"},
+  "courage+foodie":  {name:"干饭无畏王", emoji:"🛡️🍗", desc:"黄瓜算什么，先吃了再说", tagline:"胆子是饿出来的"},
+  "affection+foodie":{name:"贴心小饭桶", emoji:"🥰🥫", desc:"陪你吃饭，也陪你难过", tagline:"最好的爱是一起干饭"},
+  "affection+courage":{name:"温柔守护骑士", emoji:"🛡️💕", desc:"打雷不怕，但你不回家它会怕", tagline:"把勇敢都用来守护你"},
+  "courage+sass":    {name:"气场大佬", emoji:"🕶️👑", desc:"家里真正的王，铲屎官只是编制内员工", tagline:"不服？哈气三连"},
+  "affection+sass":  {name:"傲娇小公主", emoji:"👑💗", desc:"嘴上说不要，身体很诚实", tagline:"蹭你可以，但必须它先开口"},
+  "foodie+sass":     {name:"美食评论家", emoji:"🍽️🧐", desc:"对猫粮的挑剔程度堪比米其林评委", tagline:"这冻干，差评"},
+  "energy+sass":     {name:"精力过剩的小暴君", emoji:"⚡👑", desc:"凌晨跑酷是因为王需要巡夜", tagline:"睡眠是弱者的借口"},
+};
+
+/* ============================================================
+   状态
+============================================================ */
+let state = { photo:null, breed:null, qIndex:0, answers:Array(QUESTIONS.length).fill(null) };
+
+/* 上传 */
+const fileInput = document.getElementById('file');
+document.getElementById('drop').addEventListener('dragover', e=>{e.preventDefault();});
+document.getElementById('drop').addEventListener('drop', e=>{
+  e.preventDefault();
+  if(e.dataTransfer.files[0]) loadPhoto(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e=>{ if(e.target.files[0]) loadPhoto(e.target.files[0]); });
+function loadPhoto(f){
+  const r = new FileReader();
+  r.onload = ev=>{
+    state.photo = ev.target.result;
+    document.getElementById('previewImg').src = state.photo;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('drop').style.display = 'none';
+  };
+  r.readAsDataURL(f);
+}
+
+/* 步骤跳转 */
+function go(n){
+  for(let i=1;i<=4;i++){
+    document.getElementById('scr'+i).classList.toggle('active', i===n);
+    document.getElementById('st'+i).classList.toggle('on', i<=n);
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toBreed(){ go(2); }
+
+/* 品种选择 */
+const grid = document.getElementById('breedGrid');
+BREEDS.forEach(b=>{
+  const d = document.createElement('div');
+  d.className = 'breed';
+  d.innerHTML = `<div class="sw" style="background:${b.sw}"></div><b>${b.name}</b>`;
+  d.onclick = ()=>{
+    document.querySelectorAll('.breed').forEach(x=>x.classList.remove('sel'));
+    d.classList.add('sel');
+    state.breed = b;
+    document.getElementById('breedBtn').disabled = false;
+  };
+  grid.appendChild(d);
+});
+
+/* 答题 */
+function startQuiz(){ state.qIndex = 0; go(3); renderQ(); }
+function renderQ(){
+  const i = state.qIndex, q = QUESTIONS[i];
+  document.getElementById('progBar').style.width = ((i)/QUESTIONS.length*100)+'%';
+  document.getElementById('progNum').textContent = `${i+1} / ${QUESTIONS.length}`;
+  document.getElementById('qNum').textContent = `Q${i+1} · ${DIMS[q.d].icon} ${DIMS[q.d].name}题`;
+  document.getElementById('qText').textContent = q.t;
+  const box = document.getElementById('opts');
+  box.innerHTML = '';
+  q.o.forEach((txt,oi)=>{
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.innerHTML = `<span class="dot">${'ABCD'[oi]}</span><span>${txt}</span>`;
+    if(state.answers[i]===oi) b.style.borderColor = 'var(--pink)', b.style.background = '#fff0f5';
+    b.onclick = ()=>{ state.answers[i] = oi; nextQ(); };
+    box.appendChild(b);
+  });
+  document.getElementById('prevBtn').style.visibility = i===0 ? 'hidden':'visible';
+}
+function nextQ(){
+  if(state.qIndex < QUESTIONS.length-1){ state.qIndex++; renderQ(); }
+  else showResult();
+}
+function prevQ(){ if(state.qIndex>0){ state.qIndex--; renderQ(); } }
+
+/* ============================================================
+   计分
+============================================================ */
+function scoreDims(){
+  const s = {energy:0, affection:0, courage:0, foodie:0, sass:0};
+  QUESTIONS.forEach((q,i)=>{ s[q.d] += (state.answers[i]??1)+1; }); // 每维 6~24
+  return s;
+}
+
+/* ============================================================
+   Q版猫 SVG 生成器
+============================================================ */
+function chibiSVG(b, dims){
+  const naked = !!b.naked, flat = !!b.flat;
+  // 表情：傲娇高→微皱眉；亲人高→眯眼笑；默认圆眼
+  const sassy = dims.sass >= 17, loving = dims.affection >= 17;
+  // 配饰：按最高维度
+  const top = Object.entries(dims).sort((a,b2)=>b2[1]-a[1])[0][0];
+  let accessory = '';
+  if(top==='foodie') accessory = `<g transform="translate(212,150) rotate(15)">
+      <ellipse cx="0" cy="0" rx="26" ry="13" fill="#8FD3E8" stroke="#5BA8C4" stroke-width="2"/>
+      <path d="M22 0 L36 -9 L36 9 Z" fill="#8FD3E8" stroke="#5BA8C4" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="-14" cy="-3" r="2.6" fill="#2E4A56"/><path d="M-24 6 Q-14 10 -4 6" stroke="#5BA8C4" stroke-width="1.6" fill="none"/></g>`;
+  else if(top==='sass') accessory = `<g transform="translate(150,26)"><path d="M-24 8 L-15 -12 L-5 2 L0 -18 L5 2 L15 -12 L24 8 Z" fill="#FFD34D" stroke="#E8A800" stroke-width="2" stroke-linejoin="round"/><circle cx="0" cy="-19" r="3.4" fill="#FF6B8A"/></g>`;
+  else if(top==='affection') accessory = `<g transform="translate(228,96)"><path d="M0 6 C-3 -2 -14 -2 -14 6 C-14 13 -6 17 0 23 C6 17 14 13 14 6 C14 -2 3 -2 0 6 Z" fill="#FF7FA8" opacity=".9"/></g>`;
+  else if(top==='energy') accessory = `<g transform="translate(226,102)"><circle r="12" fill="#FF9D76" stroke="#E07A50" stroke-width="2"/><path d="M-5 -6 A 7.5 7.5 0 1 1 -5 6" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></g>`;
+  else if(top==='courage') accessory = `<g transform="translate(224,100)"><path d="M0 -14 L4.5 -4.5 L15 -4.5 L7 2 L10 12 L0 6 L-10 12 L-7 2 L-15 -4.5 L-4.5 -4.5 Z" fill="#FFD34D" stroke="#E8A800" stroke-width="1.6" stroke-linejoin="round"/></g>`;
+
+  const base = b.base, stripe = b.stripe, pts = b.pattern==='points'? b.stripe : null;
+
+  // 耳朵
+  const earL = `<path d="M92 68 L104 18 L138 46 Z" fill="${base}" stroke="rgba(0,0,0,.12)" stroke-width="2" stroke-linejoin="round"/><path d="M102 60 L108 32 L127 49 Z" fill="${b.inner}"/>`;
+  const earR = `<path d="M208 68 L196 18 L162 46 Z" fill="${base}" stroke="rgba(0,0,0,.12)" stroke-width="2" stroke-linejoin="round"/><path d="M198 60 L192 32 L173 49 Z" fill="${b.inner}"/>`;
+  let ears = earL + earR;
+  if(pts){ ears = `<path d="M92 68 L104 18 L138 46 Z" fill="${pts}"/><path d="M208 68 L196 18 L162 46 Z" fill="${pts}"/>`; }
+  if(b.pattern==='patches'){ ears += `<path d="M92 68 L104 18 L138 46 Z" fill="${b.patch2}" opacity=".85"/>`; }
+
+  // 尾巴
+  const tail = `<path d="M196 246 Q268 238 258 172" stroke="${base}" stroke-width="22" fill="none" stroke-linecap="round"/>`;
+  let tailTip = '';
+  if(pts||stripe) tailTip = `<circle cx="258" cy="172" r="11" fill="${pts||stripe}"/>`;
+
+  // 身体
+  const body = `<ellipse cx="150" cy="222" rx="56" ry="46" fill="${base}" stroke="rgba(0,0,0,.10)" stroke-width="2"/>
+    <ellipse cx="150" cy="236" rx="30" ry="26" fill="${b.belly}" opacity="${naked?0:.95}"/>
+    <ellipse cx="122" cy="252" rx="16" ry="11" fill="${b.belly}"/><ellipse cx="178" cy="252" rx="16" ry="11" fill="${b.belly}"/>
+    <path d="M116 254 L116 258 M122 254 L122 258 M128 254 L128 258" stroke="rgba(0,0,0,.25)" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M172 254 L172 258 M178 254 L178 258 M184 254 L184 258" stroke="rgba(0,0,0,.25)" stroke-width="1.6" stroke-linecap="round"/>`;
+
+  // 头
+  const head = `<circle cx="150" cy="122" r="76" fill="${base}" stroke="rgba(0,0,0,.10)" stroke-width="2"/>`;
+
+  // 头部花纹
+  let pattern = '';
+  if(b.pattern==='tabby' && stripe){
+    pattern = `<path d="M142 58 Q150 70 142 84" stroke="${stripe}" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M150 54 Q160 68 152 84" stroke="${stripe}" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M158 58 Q168 72 160 84" stroke="${stripe}" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M84 112 Q92 106 98 114" stroke="${stripe}" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M216 112 Q208 106 202 114" stroke="${stripe}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  }
+  if(pts){
+    pattern = `<ellipse cx="150" cy="150" rx="40" ry="26" fill="${pts}" opacity=".55"/>`;
+  }
+  if(b.pattern==='patches'){
+    pattern = `<path d="M96 74 Q116 62 138 74 Q132 96 108 98 Q92 90 96 74 Z" fill="${b.patch2}" opacity=".92"/>
+      <path d="M196 150 Q216 142 222 158 Q216 174 198 170 Q188 160 196 150 Z" fill="${b.patch2}" opacity=".92"/>
+      <path d="M104 152 Q114 146 120 156 Q116 168 104 166 Q98 160 104 152 Z" fill="${b.patch2}" opacity=".7"/>`;
+  }
+  if(naked){
+    pattern = `<path d="M118 96 Q150 88 182 96" stroke="rgba(180,110,90,.4)" stroke-width="2" fill="none"/>
+      <path d="M124 168 Q150 176 176 168" stroke="rgba(180,110,90,.3)" stroke-width="2" fill="none"/>`;
+  }
+
+  // 眼睛
+  const eyeY = flat? 118 : 122;
+  let eyes = '';
+  const mkEye = (cx)=>{
+    if(loving) return `<path d="M${cx-15} ${eyeY+2} Q${cx} ${eyeY-14} ${cx+15} ${eyeY+2}" stroke="#4A3B44" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+    let g = `<ellipse cx="${cx}" cy="${eyeY}" rx="14" ry="17" fill="${b.eye}"/>`;
+    if(sassy) g += `<rect x="${cx-16}" y="${eyeY-20}" width="32" height="9" rx="4" fill="${base}"/>`;
+    g += `<circle cx="${cx-4}" cy="${eyeY-6}" r="4.5" fill="#fff"/><circle cx="${cx+5}" cy="${eyeY+7}" r="2.2" fill="#fff" opacity=".8"/>`;
+    return g;
+  };
+  eyes = mkEye(118) + mkEye(182);
+
+  // 口鼻区（扁脸更靠上靠中）
+  const my = flat? 142 : 150;
+  const nose = `<path d="M150 ${my-4} L155 ${my+1} L150 ${my+5} L145 ${my+1} Z" fill="${flat?'#D98A7E':'#E8836F'}"/>`;
+  const mouth = `<path d="M150 ${my+5} Q145 ${my+12} 138 ${my+8} M150 ${my+5} Q155 ${my+12} 162 ${my+8}" stroke="#4A3B44" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+
+  // 腮红 + 胡须
+  const blushO = loving? .75 : .45;
+  const blush = `<ellipse cx="96" cy="146" rx="12" ry="7" fill="#FF9DB0" opacity="${blushO}"/><ellipse cx="204" cy="146" rx="12" ry="7" fill="#FF9DB0" opacity="${blushO}"/>`;
+  const whisk = `<g stroke="rgba(70,55,60,.55)" stroke-width="2" stroke-linecap="round">
+    <path d="M96 ${my-2} L58 ${my-8}"/><path d="M96 ${my+4} L60 ${my+6}"/>
+    <path d="M204 ${my-2} L242 ${my-8}"/><path d="M204 ${my+4} L240 ${my+6}"/></g>`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+    <circle cx="150" cy="152" r="128" fill="#FFF6EA"/>
+    <circle cx="150" cy="152" r="128" fill="none" stroke="#FFE3C8" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+    ${tail}${tailTip}${ears}${body}${head}${pattern}${eyes}${nose}${mouth}${blush}${whisk}${accessory}
+  </svg>`;
+}
+
+/* ============================================================
+   结果
+============================================================ */
+let lastChibiSVG = '';
+function showResult(){
+  const dims = scoreDims();
+  const b = state.breed;
+  const ranked = Object.entries(dims).sort((a,b2)=>b2[1]-a[1]);
+  const top2 = [ranked[0][0], ranked[1][0]];
+  const arch = ARCHETYPES[PAIR_KEY(top2[0], top2[1])] || ARCHETYPES["affection+sass"];
+  const topName = DIMS[ranked[0][0]].name, lowName = DIMS[ranked[4][0]].name;
+
+  // 头部
+  document.getElementById('archName').textContent = arch.name;
+  document.getElementById('archBadge').textContent = arch.emoji + ' ' + b.name + ' · ' + arch.tagline;
+  document.getElementById('archDesc').textContent = arch.desc;
+  document.getElementById('resultPhoto').src = state.photo;
+  lastChibiSVG = chibiSVG(b, dims);
+  document.getElementById('chibiBox').innerHTML = lastChibiSVG;
+
+  // 维度图
+  const dc = document.getElementById('dimChart');
+  dc.innerHTML = Object.entries(dims).map(([k,v])=>{
+    const pct = Math.round((v-6)/18*100);
+    return `<div class="dim"><div class="row"><span>${DIMS[k].icon} ${DIMS[k].name}</span><b>${v} / 24</b></div>
+      <div class="bar"><i style="background:${DIMS[k].color}" data-w="${pct}"></i></div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#dimChart .bar i').forEach(i=>i.style.width=i.dataset.w+'%'), 60);
+
+  // 故事
+  const nick = {'energy':'电量永远满格的小马达','affection':'把你当全世界的贴心小孩','courage':'天不怕地不怕的探险家','foodie':'为吃而生的小饭桶','sass':'集骄傲与可爱于一身的小主子'}[ranked[0][0]];
+  const low = {'energy':'安静派睡眠大师','affection':'独立自由的独行侠','courage':'谨慎小心的观察员','foodie':'对吃很佛系的清瘦选手','sass':'随和好脾气的小天使'}[ranked[4][0]];
+  document.getElementById('storyBox').innerHTML = `
+    <p>🧡 <b>日常篇</b>——这只${b.name}，是家里公认的${nick}。${arch.tagline}，是它的人生信条。清晨的第一缕阳光、你开冰箱的声音、快递箱落地的瞬间，都逃不过它的雷达。铲屎官常说：养它之前以为养了只猫，养它之后才发现是养了个精力无限的室友。</p>
+    <p>🌙 <b>隐藏篇</b>——但别被表象骗了。在${topName}的光环之下，它其实还是个${low}。夜深人静的时候，它也会偷偷趴在你身边，用只有你能听到的呼噜声说：\"这个家，有你才算完整。\"</p>
+    <p>💌 <b>给你的话</b>——它或许不会说话，但它用尾巴的弧度、眨眼的频率和饭碗旁边的等待，写了一整本没寄出的情书。请继续做那个懂它的人：多陪它玩${ranked[0][0]==='foodie'?'——顺便管住零食罐':'一会儿'}，多摸摸它的头。它的世界很小，小到只有你。</p>`;
+
+  // 运势（答案 + 日期 伪随机，同一天同答案结果稳定）
+  const seedStr = state.answers.join('') + new Date().toISOString().slice(0,10);
+  let seed = 0; for(const c of seedStr) seed = (seed*31 + c.charCodeAt(0)) >>> 0;
+  const rand = ()=>{ seed = (seed*1103515245 + 12345) >>> 0; return seed / 4294967295; };
+  const star = n => '★'.repeat(n) + '☆'.repeat(5-n);
+  const cats = [['💗 桃花运','猫缘与贵人缘'],['🎮 玩耍运','玩耍与跑酷运势'],['🍚 财运','零食与罐头财运'],['😴 健康运','睡眠与体检运势'],['🐾 出行运','出门与体检运势']];
+  document.getElementById('fortuneGrid').innerHTML = cats.map(([n,d])=>{
+    const v = 1 + Math.floor(rand()*5);
+    return `<div class="fcell"><b>${n}</b><div class="stars">${star(v)}</div><span style="font-size:11px;color:#b9a9b4">${d}</span></div>`;
+  }).join('');
+  const luckyColors = ['奶油黄','猫薄荷绿','小鱼干金','暖橘色','云朵白','樱花粉'];
+  const quotes = [
+    '本周星象显示：你家猫砂盆附近将有好事发生。保持碗满、心怀感激，好运自然来。',
+    '木星滑过喵星第三象限——意味着有一个纸箱正在命中注定的位置等你。别犹豫，坐进去。',
+    '本月宜躺平。研究表明，每天多睡两小时的猫，尾巴发光的概率提升 300%。',
+    '宇宙在提醒你：那个一直盯着的红点，本周可以扑了。时机已到。',
+    '好运藏在窗台的阳光里。本周挑一个下午，把自己晒成完美的猫饼。',
+  ];
+  document.getElementById('fortuneQuote').innerHTML = `🔮 <b>喵星预言家的话：</b>${quotes[Math.floor(rand()*quotes.length)]}`;
+  document.getElementById('yiBox').innerHTML = `<b>✅ 本周宜</b>${['窗台晒背','深夜跑酷','疯狂贴贴','干饭两碗','霸占纸箱','藐视逗猫棒'].filter(()=>rand()>0.3).slice(0,3).join(' · ') || '晒太阳 · 睡大觉'}`;
+  document.getElementById('jiBox').innerHTML = `<b>❌ 本周忌</b>${['被塞进航空箱','闻到黄瓜','洗澡','减肥计划','让出床铺','剪指甲'].filter(()=>rand()>0.3).slice(0,3).join(' · ') || '称体重'}`;
+  const lc = luckyColors[Math.floor(rand()*luckyColors.length)];
+  document.getElementById('fortuneQuote').innerHTML += `<br>🍀 幸运色：<b>${lc}</b> ｜ 幸运数字：<b>${1+Math.floor(rand()*9)}</b> ｜ 幸运物：<b>${['冻干','纸箱','逗猫棒','你的旧毛衣','窗台C位','猫薄荷'][Math.floor(rand()*6)]}</b>`;
+
+  go(4);
+}
+
+/* 下载Q版 PNG */
+function downloadChibi(){
+  const img = new Image();
+  const svgBlob = new Blob([lastChibiSVG], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+  img.onload = ()=>{
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 600;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, 600, 600);
+    const a = document.createElement('a');
+    a.download = '我的Q版小猫.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>猫咪揍狗大作战</title>
+<style>
+  :root{ --ink:#3d3242; --ink2:#7a6d80; --peach:#ff9d76; --pink:#ff7fa8; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;color:var(--ink);
+    background:radial-gradient(900px 500px at 10% -10%, #ffe9d6 0%, transparent 60%),
+      radial-gradient(900px 500px at 95% 0%, #ffe1ec 0%, transparent 55%), #fff7ee;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none;
+  }
+  .stage{
+    position:relative;width:min(860px,100vw);height:min(600px,100vh);
+    background:linear-gradient(#e8f6ff 0%, #e8f6ff 58%, #cdeeba 58%, #b8dd9c 100%);
+    border-radius:0;overflow:hidden;box-shadow:0 0 60px rgba(190,140,110,.2);
+  }
+  @media(min-width:900px){ .stage{border-radius:24px;height:min(620px,92vh)} }
+  .cloud{position:absolute;font-size:42px;opacity:.85;animation:drift linear infinite}
+  @keyframes drift{from{transform:translateX(-120px)}to{transform:translateX(110vw)}}
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,250,242,.96);z-index:50;text-align:center;padding:20px;overflow-y:auto}
+  .screen.active{display:flex}
+  .screen.clear{background:rgba(255,250,242,.88)}
+  .logo{font-size:clamp(26px,6vw,40px);font-weight:900;letter-spacing:2px}
+  .logo em{font-style:normal;color:var(--pink)}
+  .sub{color:var(--ink2);font-size:14px;margin:8px 0 4px}
+  .cat-grid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:16px 0 4px}
+  .cat-card{
+    width:118px;border:2.5px solid #f0e4dc;border-radius:18px;background:#fffdfb;padding:10px 6px 12px;cursor:pointer;transition:.15s;
+  }
+  .cat-card:hover{transform:translateY(-4px);box-shadow:0 10px 20px rgba(190,140,110,.2)}
+  .cat-card.sel{border-color:var(--pink);background:#fff0f5}
+  .cat-card svg{width:84px;height:84px}
+  .cat-card b{font-size:14px;display:block}
+  .cat-card .perk{font-size:11px;color:#a86;display:block;margin-top:3px;line-height:1.4}
+  .btn{
+    border:none;cursor:pointer;font-size:17px;font-weight:800;color:#fff;padding:13px 40px;border-radius:999px;
+    background:linear-gradient(135deg,var(--peach),var(--pink));box-shadow:0 8px 20px rgba(255,127,168,.35);transition:.15s;margin-top:14px;
+  }
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn:hover:not(:disabled){transform:translateY(-2px)}
+  .btn.small{font-size:14px;padding:9px 24px;margin:6px 4px 0}
+  .btn.ghost{background:#fff;color:var(--ink2);box-shadow:none;border:1.5px solid #f0e4dc}
+  /* 关卡介绍 */
+  .lv-badge{background:var(--pink);color:#fff;border-radius:999px;padding:6px 20px;font-weight:800;font-size:15px;display:inline-block}
+  .dogs-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+  .dog-chip{background:#fff;border:2px solid #f0e4dc;border-radius:14px;padding:8px 10px;font-size:12px;line-height:1.4;width:92px}
+  .dog-chip svg{width:56px;height:56px}
+  .dog-chip b{display:block;font-size:12.5px}
+  .rules{font-size:13px;color:var(--ink2);line-height:1.9}
+  /* HUD */
+  #hud{position:absolute;top:0;left:0;right:0;padding:10px 14px 0;display:none;justify-content:space-between;align-items:flex-start;z-index:20;gap:10px}
+  #queueBar{position:absolute;top:58px;left:0;right:0;display:none;justify-content:center;gap:6px;z-index:20;pointer-events:none}
+  .qchip{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.75);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;line-height:1;transition:.15s;color:#7a6d80}
+  .qchip svg{width:30px;height:30px}
+  .qchip.now{background:#fff;border-color:#ff7fa8;transform:scale(1.18);box-shadow:0 4px 12px rgba(255,127,168,.4)}
+  .qchip.done{opacity:.3}
+  .qchip.armor::after{content:"×2";font-size:8px;font-weight:900;color:#e05252}
+  #hud .left{font-size:14px;font-weight:800}
+  #hud .left .goal{color:var(--pink)}
+  #timerWrap{flex:1;max-width:340px}
+  #timerBar{height:14px;background:#fff;border-radius:99px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  #timerBar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#5ec9a7,#ffc94d,#ff6b6b);border-radius:99px}
+  #timeText{font-size:12px;font-weight:800;text-align:center;margin-top:3px;color:#5a4d60}
+  /* 狗 */
+  .dog{position:absolute;z-index:10;cursor:pointer;transition:none}
+  .dog svg{display:block;pointer-events:none}
+  .dog .hp-pips{position:absolute;top:-10px;left:50%;transform:translateX(-50%);display:flex;gap:3px;pointer-events:none}
+  .hp-pips i{width:9px;height:9px;border-radius:50%;background:#e05252;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .dog.hitflash svg{filter:brightness(2) saturate(0);transition:filter .05s}
+  .dog.dead{transition:transform .5s cubic-bezier(.2,.6,.3,1), opacity .5s;opacity:0;pointer-events:none}
+  .paw{
+    position:absolute;z-index:15;width:90px;height:90px;pointer-events:none;
+    animation:slap .35s ease forwards;
+  }
+  @keyframes slap{
+    0%{transform:scale(.3) rotate(-30deg);opacity:0}
+    35%{transform:scale(1.25) rotate(8deg);opacity:1}
+    100%{transform:scale(1) rotate(0);opacity:0}
+  }
+  .pop{position:absolute;z-index:16;font-size:22px;font-weight:900;color:#e05252;pointer-events:none;animation:popup .7s ease forwards;text-shadow:0 2px 0 #fff}
+  @keyframes popup{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-46px);opacity:0}}
+  #myCat{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);z-index:5;animation:idle 1.6s ease-in-out infinite}
+  @keyframes idle{0%,100%{transform:translateX(-50%) scaleY(1)}50%{transform:translateX(-50%) scaleY(.97)}}
+  .combo{position:absolute;z-index:18;font-size:16px;font-weight:900;color:#ff7fa8;pointer-events:none;animation:popup .6s ease forwards;text-shadow:0 1px 0 #fff}
+  .result-big{font-size:clamp(30px,7vw,46px);font-weight:900;margin-bottom:6px}
+  .stars-big{font-size:40px;letter-spacing:6px;margin:8px 0}
+  .stat{font-size:15px;color:var(--ink2);line-height:2}
+  .b{font-weight:900;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="cloud" style="top:6%;animation-duration:60s">☁️</div>
+  <div class="cloud" style="top:16%;animation-duration:85s;animation-delay:-40s">☁️</div>
+  <div class="cloud" style="top:28%;font-size:30px;animation-duration:70s;animation-delay:-20s">☁️</div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="left">关卡 <span id="hudLv"></span> ｜ 顺序 <span class="goal" id="hudScore"></span></div>
+    <div id="timerWrap">
+      <div id="timerBar"><i id="timerFill"></i></div>
+      <div id="timeText"></div>
+    </div>
+  </div>
+  <div id="queueBar"></div>
+
+  <!-- 场上的猫 -->
+  <div id="myCat"></div>
+
+  <!-- 开始/选猫 -->
+  <div class="screen active" id="scrStart">
+    <div class="logo">🐱 猫咪<em>揍狗</em>大作战 🐶</div>
+    <div class="sub">狗子组团来犯！选一只猫，5 关之内把它们全揍跑</div>
+    <div class="cat-grid" id="catGrid"></div>
+    <div class="rules" id="catPerk"></div>
+    <div class="rules" style="margin-top:10px">规则：每关会随机生成一个<b style="color:#e05252">揍狗顺序</b>，必须按顺序揍当前指定的狗<br>揍错了扣 2 秒还断连击！狗子品种随机刷新，越到后面池子越大、越快越肉</div>
+    <button class="btn" id="startBtn" disabled>先选一只猫</button>
+  </div>
+
+  <!-- 关卡介绍 -->
+  <div class="screen" id="scrIntro">
+    <span class="lv-badge" id="introLv"></span>
+    <div class="logo" style="font-size:26px;margin-top:10px" id="introTitle"></div>
+    <div class="sub" id="introDesc"></div>
+    <div class="dogs-row" id="introDogs"></div>
+    <div class="rules">目标：<b id="introGoal" style="color:#e05252"></b> ｜ 限时：<b id="introTime" style="color:#e05252"></b><br>⚠️ <span id="introWarn"></span></div>
+    <button class="btn" onclick="beginLevel()">开揍！</button>
+  </div>
+
+  <!-- 通关/失败/结算 -->
+  <div class="screen clear" id="scrResult">
+    <div class="result-big" id="resTitle"></div>
+    <div class="stars-big" id="resStars"></div>
+    <div class="stat" id="resStat"></div>
+    <div id="resBtns"></div>
+  </div>
+</div>
+
+<script>
+/* ================= 音效（WebAudio 合成，无需素材） ================= */
+let AC=null;
+function beep(f,d,type='square',v=.12,slide=0){
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.value=f;
+    if(slide) o.frequency.linearRampToValueAtTime(f+slide, AC.currentTime+d);
+    g.gain.value=v; g.gain.exponentialRampToValueAtTime(.001, AC.currentTime+d);
+    o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+const sSlap=()=>{beep(160,.08,'square',.18,-60);beep(520,.06,'triangle',.1,200);};
+const sCry =()=>beep(700,.22,'sawtooth',.08,-400);
+const sMiss=()=>beep(200,.12,'sine',.08,-80);
+const sWin =()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.18,'triangle',.12),i*110));};
+const sFail=()=>{[400,320,240,160].forEach((f,i)=>setTimeout(()=>beep(f,.2,'sawtooth',.1),i*140));};
+const sCrit=()=>{beep(900,.1,'square',.14,300);setTimeout(()=>beep(1200,.15,'square',.12,200),80);};
+
+/* ================= 可选猫（5种，各带技能） ================= */
+function catSVG(c){
+  const b=c.base, inner=c.inner, eye=c.eye;
+  let hat='', pattern='';
+  if(c.pattern==='calico') pattern=`<path d="M96 74 Q116 62 138 74 Q132 96 108 98 Q92 90 96 74 Z" fill="#F5A65B" opacity=".92"/><path d="M196 150 Q216 142 222 158 Q216 174 198 170 Q188 160 196 150 Z" fill="#3A3A3E" opacity=".9"/>`;
+  if(c.pattern==='tabby') pattern=`<path d="M142 58 Q150 70 142 84" stroke="${c.stripe}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M158 58 Q168 72 160 84" stroke="${c.stripe}" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+  if(c.pattern==='points') pattern=`<ellipse cx="150" cy="152" rx="38" ry="24" fill="${c.stripe}" opacity=".5"/>`;
+  if(c.hat) hat=`<g transform="translate(150,34)"><ellipse cx="0" cy="10" rx="44" ry="9" fill="#E05252"/><path d="M-30 10 Q-30 -22 0 -22 Q30 -22 30 10 Z" fill="#E05252"/><path d="M-30 -2 Q0 8 30 -2" stroke="#fff" stroke-width="3" fill="none"/><circle cx="0" cy="-22" r="5" fill="#FFD34D"/></g>`;
+  const eyes = `<ellipse cx="118" cy="122" rx="13" ry="16" fill="${eye}"/><circle cx="114" cy="116" r="4.5" fill="#fff"/><ellipse cx="182" cy="122" rx="13" ry="16" fill="${eye}"/><circle cx="178" cy="116" r="4.5" fill="#fff"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+    <circle cx="150" cy="150" r="126" fill="#FFF6EA"/><circle cx="150" cy="150" r="126" fill="none" stroke="#FFE3C8" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+    <path d="M196 246 Q268 238 258 176" stroke="${b}" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <path d="M92 68 L104 18 L138 46 Z" fill="${b}"/><path d="M102 60 L108 32 L127 49 Z" fill="${inner}"/>
+    <path d="M208 68 L196 18 L162 46 Z" fill="${b}"/><path d="M198 60 L192 32 L173 49 Z" fill="${inner}"/>
+    <ellipse cx="150" cy="222" rx="56" ry="46" fill="${b}"/><ellipse cx="150" cy="238" rx="30" ry="24" fill="${c.belly}"/>
+    <circle cx="150" cy="122" r="76" fill="${b}"/>${pattern}${eyes}
+    <path d="M150 148 L155 153 L150 157 L145 153 Z" fill="#E8836F"/>
+    <path d="M150 157 Q145 164 138 160 M150 157 Q155 164 162 160" stroke="#4A3B44" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="96" cy="144" rx="11" ry="7" fill="#FF9DB0" opacity=".5"/><ellipse cx="204" cy="144" rx="11" ry="7" fill="#FF9DB0" opacity=".5"/>
+    ${hat}</svg>`;
+}
+const CATS=[
+  {id:'calico', name:'三花', sw:'#F5A65B,#3A3A3E', base:'#FDFBF8', belly:'#FDFBF8', inner:'#FFD9BC', eye:'#C9A227', pattern:'calico',
+   perk:'技能【吉祥三花】本关时间 +5 秒'},
+  {id:'exotic', name:'加菲', sw:'#F5A65B', base:'#F5A65B', belly:'#FFE3C2', inner:'#FFD9BC', eye:'#8B5E3C', pattern:'tabby', stripe:'#E08A3C',
+   perk:'技能【大橘手】爪击判定范围 +35%'},
+  {id:'devon', name:'德文', sw:'#9C9CA6', base:'#B9BAC4', belly:'#E8E4DC', inner:'#D9CBBB', eye:'#C9A227', pattern:'tabby', stripe:'#8E8E98',
+   perk:'技能【闪电爪】连击不重置，连击分翻倍'},
+  {id:'hatcat', name:'戴帽', sw:'#E05252', base:'#EDEAE6', belly:'#FBF7F4', inner:'#FFD9BC', eye:'#7FB2E5', pattern:'solid', hat:true,
+   perk:'技能【帽子威压】全场狗子移速 -20%'},
+  {id:'siamese', name:'暹罗', sw:'#5C4A3D', base:'#E8DCCB', belly:'#F2EAD9', inner:'#C4A48C', eye:'#4E8FD9', pattern:'points', stripe:'#5C4A3D',
+   perk:'技能【暹罗之眼】20% 概率暴击，一爪秒杀'},
+];
+
+/* ================= 10 种狗（特征差异强化版） ================= */
+function dogSVG(d){
+  const oc='rgba(0,0,0,.12)';
+  // --- 耳朵：立耳/蝙蝠耳/垂耳/毛球耳 ---
+  let ears='';
+  if(d.ear==='pointy'){
+    ears=`<path d="M98 82 L104 26 L138 54 Z" fill="${d.color}" stroke="${oc}" stroke-width="2"/><path d="M107 70 L110 42 L128 56 Z" fill="${d.inner}"/>
+          <path d="M202 82 L196 26 L162 54 Z" fill="${d.color}" stroke="${oc}" stroke-width="2"/><path d="M193 70 L190 42 L172 56 Z" fill="${d.inner}"/>`;
+  } else if(d.ear==='bat'){
+    ears=`<path d="M98 86 Q78 20 118 32 Q138 42 132 72 Z" fill="${d.color}" stroke="${oc}" stroke-width="2"/><path d="M108 68 Q98 40 116 46 Q126 52 124 66 Z" fill="${d.inner}"/>
+          <path d="M202 86 Q222 20 182 32 Q162 42 168 72 Z" fill="${d.color}" stroke="${oc}" stroke-width="2"/><path d="M192 68 Q202 40 184 46 Q174 52 176 66 Z" fill="${d.inner}"/>`;
+  } else if(d.ear==='floppy'){
+    ears=`<path d="M100 64 Q70 118 100 128 Q122 124 122 86 Z" fill="${d.color2||d.color}" stroke="${oc}" stroke-width="2"/>
+          <path d="M200 64 Q230 118 200 128 Q178 124 178 86 Z" fill="${d.color2||d.color}" stroke="${oc}" stroke-width="2"/>`;
+  } else if(d.ear==='pom'){
+    ears=`<circle cx="94" cy="70" r="23" fill="${d.color}" stroke="${oc}" stroke-width="2"/><circle cx="86" cy="62" r="10" fill="${d.color2||d.color}" opacity=".4"/>
+          <circle cx="206" cy="70" r="23" fill="${d.color}" stroke="${oc}" stroke-width="2"/><circle cx="214" cy="62" r="10" fill="${d.color2||d.color}" opacity=".4"/>`;
+  }
+  // --- 尾巴：卷尾/直尾/毛球尾/无尾 ---
+  let tail='';
+  if(d.tail==='curl') tail=`<path d="M202 230 Q252 214 240 184 Q232 170 214 178" stroke="${d.color}" stroke-width="18" fill="none" stroke-linecap="round"/>`;
+  else if(d.tail==='straight') tail=`<path d="M202 228 Q252 220 258 182" stroke="${d.color}" stroke-width="18" fill="none" stroke-linecap="round"/>`;
+  else if(d.tail==='pom') tail=`<circle cx="246" cy="198" r="17" fill="${d.color}" stroke="${oc}" stroke-width="2"/>`;
+  // --- 身体：普通/宽矮（柯基·法斗） ---
+  const wide=!!d.wide;
+  const bodyCy = wide?228:222, bodyRx = wide?72:56, bodyRy = wide?38:46;
+  // --- 眼睛（哈士奇蓝眼，其他黑豆眼） ---
+  const eyeC = d.eyeColor||'#3A3A3E';
+  const eyes = `<ellipse cx="126" cy="114" rx="11" ry="13" fill="${eyeC}"/><circle cx="123" cy="109" r="3.4" fill="#fff"/>
+                <ellipse cx="174" cy="114" rx="11" ry="13" fill="${eyeC}"/><circle cx="171" cy="109" r="3.4" fill="#fff"/>`;
+  // --- 口鼻贴片 ---
+  const muzzle = d.muzzle? `<ellipse cx="150" cy="140" rx="${d.muzzleW||26}" ry="15" fill="${d.muzzle}"/>` : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+    ${tail}
+    <ellipse cx="116" cy="${wide?252:248}" rx="18" ry="10" fill="${d.belly}"/><ellipse cx="184" cy="${wide?252:248}" rx="18" ry="10" fill="${d.belly}"/>
+    <ellipse cx="150" cy="${bodyCy}" rx="${bodyRx}" ry="${bodyRy}" fill="${d.color}"/>
+    ${d.bodyMark||''}
+    <ellipse cx="150" cy="${bodyCy+10}" rx="28" ry="${wide?16:20}" fill="${d.belly}"/>
+    ${ears}
+    <circle cx="150" cy="112" r="62" fill="${d.color}"/>
+    ${d.mark||''}
+    ${muzzle}
+    ${eyes}
+    <ellipse cx="150" cy="140" rx="10" ry="8" fill="#4A3B44"/>
+    <path d="M150 148 Q142 158 132 152 M150 148 Q158 158 168 152" stroke="#4A3B44" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M150 152 Q150 164 142 166" stroke="#E8756B" stroke-width="7" fill="none" stroke-linecap="round"/>
+    </svg>`;
+}
+const DOGS={
+  /* 柴犬：橙红+奶油眉/嘴套，卷尾 */
+  shiba:  {name:'柴犬', color:'#F08C3A', belly:'#FFE8CF', inner:'#FFC9A3', ear:'pointy', tail:'curl', size:1,
+    mark:`<path d="M128 92 Q136 84 144 92 Q140 100 132 100 Z" fill="#FFE8CF"/><path d="M172 92 Q164 84 156 92 Q160 100 168 100 Z" fill="#FFE8CF"/>`,
+    muzzle:'#FFE8CF', muzzleW:28},
+  /* 柯基：宽矮身子+白色鼻梁线，无尾 */
+  corgi:  {name:'柯基', color:'#F2A65A', belly:'#FDF6EA', inner:'#FFC9A3', ear:'pointy', tail:'none', wide:true, size:.9,
+    mark:`<path d="M150 52 L144 96 L156 96 Z" fill="#FDF6EA"/><circle cx="128" cy="92" r="5" fill="#FDF6EA"/><circle cx="172" cy="92" r="5" fill="#FDF6EA"/>`},
+  /* 金毛：金黄大只+深色垂耳+浅金嘴套 */
+  golden: {name:'金毛', color:'#E8B45C', color2:'#C89347', belly:'#F8EBD3', inner:'#B07E3E', ear:'floppy', tail:'straight', size:1.14,
+    muzzle:'#F4E3C2', muzzleW:30,
+    bodyMark:`<path d="M112 214 Q150 196 188 214 Q184 236 150 240 Q116 236 112 214 Z" fill="#F4E3C2" opacity=".7"/>`},
+  /* 比熊：纯白云朵卷，毛球耳+毛球尾 */
+  bichon: {name:'比熊', color:'#FDFDFD', color2:'#E8E8EE', belly:'#FFFFFF', inner:'#F2D5C2', ear:'pom', tail:'pom', size:.9,
+    bodyMark:`<circle cx="112" cy="204" r="16" fill="#F4F4F8"/><circle cx="188" cy="204" r="16" fill="#F4F4F8"/><circle cx="150" cy="192" r="14" fill="#F4F4F8"/>`},
+  /* 哈士奇：灰帽白脸+蓝眼睛 */
+  husky:  {name:'哈士奇', color:'#98A2B3', belly:'#F4F4F2', inner:'#E8C9BC', ear:'pointy', tail:'straight', size:1.06,
+    mark:`<ellipse cx="150" cy="120" rx="38" ry="30" fill="#F4F4F2"/><path d="M108 86 Q150 56 192 86 Q164 100 150 100 Q136 100 108 86 Z" fill="#5F6A7A"/>`,
+    eyeColor:'#5FA8E0'},
+  /* 泰迪：深棕+毛球耳尾+头顶毛球 */
+  poodle: {name:'泰迪', color:'#A9744F', color2:'#8E5E3C', belly:'#C99A73', inner:'#7E5232', ear:'pom', tail:'pom', size:.84,
+    mark:`<circle cx="150" cy="52" r="19" fill="#A9744F" stroke="rgba(0,0,0,.12)" stroke-width="2"/><circle cx="143" cy="46" r="7" fill="#8E5E3C" opacity=".5"/>`,
+    muzzle:'#C99A73', muzzleW:24},
+  /* 萨摩耶：纯白+灰耳尖+标志性微笑，护甲×2 */
+  samoyed:{name:'萨摩耶', color:'#FCFAF6', color2:'#E3DED6', belly:'#FFFFFF', inner:'#E8D5C8', ear:'pointy', tail:'curl', size:1.1, armor:2,
+    mark:`<path d="M98 82 L104 26 L138 54 Z" fill="#E3DED6" opacity=".85"/><path d="M202 82 L196 26 L162 54 Z" fill="#E3DED6" opacity=".85"/>`,
+    muzzle:'#FFFFFF', muzzleW:30},
+  /* 法斗：蝙蝠耳+虎斑纹+深色宽嘴套，会闪避 */
+  fbulldog:{name:'法斗', color:'#8E97A3', color2:'#5F6A7A', belly:'#E8E4DC', inner:'#D8CCC0', ear:'bat', tail:'none', wide:true, size:.92, dodge:true,
+    mark:`<path d="M118 84 Q150 66 182 84 Q178 100 150 102 Q122 100 118 84 Z" fill="#5F6A7A" opacity=".6"/>`,
+    muzzle:'#5F6A7A', muzzleW:32,
+    bodyMark:`<path d="M118 202 Q126 216 118 232 M150 198 Q158 214 150 234 M182 202 Q176 216 184 232" stroke="#5F6A7A" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>`},
+  /* 德牧：黑背黑脸大只，护甲×2 */
+  gsd:    {name:'德牧', color:'#D9A054', color2:'#3A342C', belly:'#EFC98F', inner:'#3A342C', ear:'pointy', tail:'straight', size:1.2, armor:2,
+    mark:`<path d="M104 94 Q150 58 196 94 Q196 62 150 52 Q104 62 104 94 Z" fill="#3A342C"/><path d="M112 100 Q150 76 188 100 Q170 112 150 112 Q130 112 112 100 Z" fill="#3A342C" opacity=".85"/>`,
+    muzzle:'#4A4038', muzzleW:28,
+    bodyMark:`<path d="M96 198 Q150 164 204 198 Q204 240 150 248 Q96 240 96 198 Z" fill="#3A342C"/>`},
+  /* 斑点狗：白底黑斑+单眼眼罩 */
+  dalmatian:{name:'斑点狗', color:'#FBFBFB', color2:'#E8E8E8', belly:'#FFFFFF', inner:'#E8D5C8', ear:'floppy', tail:'straight', size:1.06,
+    mark:`<circle cx="112" cy="74" r="11" fill="#2E2E34"/><circle cx="188" cy="68" r="8" fill="#2E2E34"/><ellipse cx="126" cy="112" rx="15" ry="13" fill="#2E2E34" opacity=".9"/><circle cx="172" cy="88" r="6" fill="#2E2E34"/>`,
+    bodyMark:`<circle cx="118" cy="200" r="10" fill="#2E2E34"/><circle cx="178" cy="212" r="8" fill="#2E2E34"/><circle cx="150" cy="188" r="7" fill="#2E2E34"/><circle cx="196" cy="192" r="9" fill="#2E2E34"/><circle cx="104" cy="224" r="7" fill="#2E2E34"/>`},
+};
+
+/* ================= 关卡（随机顺序揍狗：池子逐关扩大） ================= */
+const LEVELS=[
+  {n:1, title:'第一关 · 门口的挑衅', desc:'先热热爪！按屏幕上方的顺序揍狗，揍错会扣秒！', pool:['shiba','corgi','golden','bichon'], goal:6,  time:40, spawn:[900,1400], speed:1.0, dodge:0},
+  {n:2, title:'第二关 · 花园攻防', desc:'池子变大了，眼睛放亮点，别揍错狗！', pool:['shiba','corgi','golden','bichon','husky','poodle'], goal:8,  time:40, spawn:[800,1250], speed:1.15, dodge:0},
+  {n:3, title:'第三关 · 二哈军团', desc:'泰迪会闪避折返，看好顺序再出爪！', pool:['shiba','corgi','golden','bichon','husky','poodle','samoyed','fbulldog'], goal:10, time:38, spawn:[700,1100], speed:1.3, dodge:.35},
+  {n:4, title:'第四关 · 微笑的硬汉', desc:'萨摩耶带护甲要揍两下，法斗左右横跳，顺序还不能乱！', pool:['shiba','corgi','golden','bichon','husky','poodle','samoyed','fbulldog','gsd'], goal:12, time:38, spawn:[650,1000], speed:1.45, dodge:.2},
+  {n:5, title:'最终关 · 十犬乱舞', desc:'全部 10 种狗随机乱入——猫之意志，在此一举！', pool:Object.keys(DOGS), goal:14, time:40, spawn:[550,900], speed:1.6, dodge:.25},
+];
+
+/* ================= 状态 ================= */
+let S={cat:null, lv:0, score:0, time:0, total:0, combo:0, dogs:[], running:false, last:0, spawnT:0, raf:null, queue:[], qi:0};
+
+/* 选猫 */
+const cg=document.getElementById('catGrid');
+CATS.forEach(c=>{
+  const d=document.createElement('div'); d.className='cat-card';
+  d.innerHTML=`<svg viewBox="0 0 300 300">${''}</svg>`; // 占位，下面直接插
+  d.innerHTML=catSVG(c)+`<b>${c.name}</b><span class="perk">${c.perk.split('】')[1]||''}</span>`;
+  d.onclick=()=>{
+    document.querySelectorAll('.cat-card').forEach(x=>x.classList.remove('sel'));
+    d.classList.add('sel'); S.cat=c;
+    document.getElementById('catPerk').innerHTML=`✨ 已选 <b>${c.name}</b> —— <b style="color:#e05252">${c.perk}</b>`;
+    const b=document.getElementById('startBtn'); b.disabled=false; b.textContent='开始揍狗！';
+  };
+  cg.appendChild(d);
+});
+
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function hideAll(){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); }
+
+document.getElementById('startBtn').onclick=()=>{ S.lv=0; S.total=0; intro(); };
+
+function intro(){
+  const L=LEVELS[S.lv];
+  document.getElementById('introLv').textContent=`第 ${L.n} 关 / 共 5 关`;
+  document.getElementById('introTitle').textContent=L.title;
+  document.getElementById('introDesc').textContent=L.desc;
+  document.getElementById('introGoal').textContent=`按顺序揍跑 ${L.goal} 只狗（顺序进关后随机生成）`;
+  document.getElementById('introTime').textContent=`${L.time + (S.cat.id==='calico'?5:0)} 秒（揍错 -2 秒）`;
+  let warns=[];
+  if(L.pool.some(b=>DOGS[b].armor===2)) warns.push('有的狗带护甲（头顶红点），要揍两下');
+  if(L.dodge>0) warns.push('有的狗会闪避折返');
+  document.getElementById('introWarn').textContent=warns.join('，')||'本关狗子都是软柿子，放心揍';
+  document.getElementById('introDogs').innerHTML=L.pool.map(b=>{
+    const d=DOGS[b];
+    return `<div class="dog-chip"><svg viewBox="0 0 300 300">${dogSVG(d)}</svg><b>${d.name}</b>${d.armor===2?'<span style="color:#e05252">护甲×2</span>':''}${d.dodge?'<span style="color:#9D7BDE">会闪避</span>':''}</div>`;
+  }).join('');
+  show('scrIntro');
+}
+
+/* ================= 游戏主循环 ================= */
+const stage=document.getElementById('stage'), hud=document.getElementById('hud');
+function stageW(){ return stage.clientWidth; }
+function stageH(){ return stage.clientHeight; }
+
+function beginLevel(){
+  const L=LEVELS[S.lv];
+  hideAll();
+  S.score=0; S.combo=0; S.qi=0;
+  // 随机生成本关揍狗顺序
+  S.queue=Array.from({length:L.goal}, ()=>L.pool[Math.floor(Math.random()*L.pool.length)]);
+  S.time=L.time + (S.cat.id==='calico'?5:0);
+  S.dogs.forEach(d=>d.el.remove()); S.dogs=[];
+  S.running=true; S.spawnT=300; S.last=performance.now();
+  document.getElementById('hudLv').textContent=L.n;
+  document.getElementById('myCat').innerHTML=`<div style="width:110px;height:110px">${catSVG(S.cat)}</div>`;
+  hud.style.display='flex';
+  document.getElementById('queueBar').style.display='flex';
+  updateHUD();
+  S.raf=requestAnimationFrame(loop);
+}
+const _svgCache={};
+function breedIcon(bid){
+  if(!_svgCache[bid]) _svgCache[bid]=dogSVG(DOGS[bid]);
+  return _svgCache[bid];
+}
+function updateHUD(){
+  const L=LEVELS[S.lv];
+  document.getElementById('hudScore').textContent=`${S.qi} / ${L.goal}`;
+  const t=S.time, tot=L.time + (S.cat.id==='calico'?5:0);
+  document.getElementById('timerFill').style.width=Math.max(0,t/tot*100)+'%';
+  document.getElementById('timeText').textContent=Math.ceil(t)+' s';
+  document.getElementById('timerFill').style.background = t<8 ? '#ff6b6b' : 'linear-gradient(90deg,#5ec9a7,#ffc94d,#ff6b6b)';
+  // 顺序队列（当前+后5个）
+  const qb=document.getElementById('queueBar');
+  let html='';
+  for(let i=S.qi;i<Math.min(S.qi+6,S.queue.length);i++){
+    const b=DOGS[S.queue[i]];
+    html+=`<div class="qchip ${i===S.qi?'now':''} ${i<S.qi?'done':''} ${b.armor===2?'armor':''}"><svg viewBox="0 0 300 300">${breedIcon(S.queue[i])}</svg>${b.name}</div>`;
+  }
+  qb.innerHTML=html;
+}
+
+function loop(now){
+  if(!S.running) return;
+  const dt=Math.min(50, now-S.last); S.last=now;
+  const L=LEVELS[S.lv];
+  // 计时
+  S.time-=dt/1000;
+  if(S.time<=0){ endLevel(false); return; }
+  // 生成
+  S.spawnT-=dt;
+  if(S.spawnT<=0 && S.dogs.length<4){
+    spawnDog(L);
+    const [a,b]=L.spawn, prog=Math.min(1, S.qi/L.goal);
+    S.spawnT=a+(b-a)*(1-prog*.5)+Math.random()*250;
+  }
+  // 移动
+  const spdMul=L.speed*(S.cat.id==='hatcat'?0.8:1);
+  for(let i=S.dogs.length-1;i>=0;i--){
+    const d=S.dogs[i];
+    d.x+=d.vx*dt/16*spdMul;
+    // 泰迪/法斗闪避：随机折返
+    if(d.dodge && Math.random()<0.0015*L.dodge*60){ d.vx*=-1; d.el.style.transform=`scaleX(${d.vx>0?1:-1})`; }
+    // 边缘：出界就消失（没揍到！）
+    if(d.x<-90||d.x>stageW()+20){ d.el.remove(); S.dogs.splice(i,1); continue; }
+    d.el.style.left=d.x+'px';
+  }
+  updateHUD();
+  S.raf=requestAnimationFrame(loop);
+}
+
+function spawnDog(L){
+  // 40% 概率刷当前目标狗，保证顺序任务可推进；其余从池子随机
+  const bid = Math.random()<0.4 ? S.queue[S.qi] : L.pool[Math.floor(Math.random()*L.pool.length)];
+  const base=DOGS[bid];
+  const fromLeft=Math.random()<.5;
+  const el=document.createElement('div'); el.className='dog';
+  const sz=(62*base.size*(1+Math.random()*.12))|0;
+  const armorHp = base.armor===2 ? 2 : 1;
+  el.innerHTML=`<div style="width:${sz}px;height:${sz}px">${dogSVG(base)}</div>`+
+    (armorHp===2?`<div class="hp-pips"><i></i><i></i></div>`:'');
+  el.style.transform=`scaleX(${fromLeft?1:-1})`;
+  const y=stageH()*0.56+Math.random()*(stageH()*0.34-sz*0.7);
+  const d={
+    el, breed:bid, x:fromLeft?-sz:stageW(), y,
+    vx:(fromLeft?1:-1)*(0.9+Math.random()*0.7)*(base.size>1?0.85:1.15),
+    hp:armorHp, dodge:!!base.dodge, born:performance.now(), dead:false, base
+  };
+  el.style.top=y+'px'; el.style.left=d.x+'px';
+  el.addEventListener('pointerdown', e=>{ e.stopPropagation(); hitDog(d, e); });
+  stage.appendChild(el); S.dogs.push(d);
+}
+
+/* 揍狗 */
+function hitDog(d, e){
+  if(!S.running||d.dead) return;
+  const rect=stage.getBoundingClientRect();
+  const px=e.clientX-rect.left, py=e.clientY-rect.top;
+  showPaw(px,py);
+  // 判定范围加成（加菲）
+  const r = S.cat.id==='exotic'? 85*1.35 : 85;
+  const cx=d.x+d.el.firstChild.offsetWidth/2, cy=d.y+d.el.firstChild.offsetHeight/2;
+  if(Math.hypot(px-cx,py-cy)>r){ sMiss(); return; }
+  // ★ 顺序判定：揍错狗 → 扣2秒、断连击
+  if(d.breed!==S.queue[S.qi]){
+    S.time=Math.max(0.1, S.time-2);
+    S.combo=0;
+    d.el.classList.add('hitflash');
+    setTimeout(()=>d.el.classList.remove('hitflash'),120);
+    showPop(cx,cy,'打错! -2s','#9D7BDE');
+    beep(300,.18,'sawtooth',.12,-180);
+    return;
+  }
+  // 暹罗暴击
+  const crit = S.cat.id==='siamese' && Math.random()<0.2;
+  if(crit){ d.hp=0; sCrit(); }
+  else { d.hp--; sSlap(); }
+  if(d.hp>0){
+    d.el.classList.add('hitflash'); sCry();
+    setTimeout(()=>d.el.classList.remove('hitflash'),120);
+    showPop(cx,cy,'护甲!','#9D7BDE');
+    return;
+  }
+  d.dead=true;
+  S.combo++;
+  const comboMul=(S.cat.id==='devon'?2:1);
+  S.qi++; S.score=S.qi;
+  // 狗飞出去
+  const dir=d.vx>0?1:-1;
+  d.el.classList.add('dead');
+  d.el.style.transform=`scaleX(${dir>0?1:-1}) translate(${dir*140}px,-160px) rotate(${dir*260}deg)`;
+  setTimeout(()=>d.el.remove(),520);
+  S.dogs=S.dogs.filter(x=>x!==d);
+  showPop(cx,cy-14,'揍飞!','#e05252');
+  if(S.combo>=3) showPop(cx,cy-44,`${S.combo}连击!${comboMul>1?' ×2':''}`,'#ff7fa8');
+  sCry();
+  updateHUD();
+  if(S.qi>=LEVELS[S.lv].goal) endLevel(true);
+}
+
+function showPaw(x,y){
+  const p=document.createElement('div'); p.className='paw';
+  p.innerHTML=`<svg viewBox="0 0 100 100"><g><ellipse cx="50" cy="62" rx="26" ry="22" fill="#FFC9B8" stroke="#E8A090" stroke-width="2"/><ellipse cx="26" cy="38" rx="9" ry="12" fill="#FFC9B8" transform="rotate(-20 26 38)"/><ellipse cx="46" cy="30" rx="9" ry="12" fill="#FFC9B8"/><ellipse cx="66" cy="34" rx="9" ry="12" fill="#FFC9B8" transform="rotate(16 66 34)"/><ellipse cx="84" cy="48" rx="8" ry="10" fill="#FFC9B8" transform="rotate(36 84 48)"/></g></svg>`;
+  p.style.left=(x-45)+'px'; p.style.top=(y-45)+'px';
+  stage.appendChild(p); setTimeout(()=>p.remove(),380);
+}
+function showPop(x,y,txt,color){
+  const p=document.createElement('div'); p.className='pop';
+  p.style.left=x+'px'; p.style.top=y+'px'; p.style.color=color; p.textContent=txt;
+  stage.appendChild(p); setTimeout(()=>p.remove(),720);
+}
+
+/* ================= 结算 ================= */
+function endLevel(win){
+  S.running=false; cancelAnimationFrame(S.raf);
+  hud.style.display='none';
+  document.getElementById('queueBar').style.display='none';
+  const L=LEVELS[S.lv];
+  S.total+=S.score;
+  const btns=document.getElementById('resBtns');
+  if(win){
+    sWin();
+    if(S.lv>=LEVELS.length-1){ finalWin(); return; }
+    document.getElementById('resTitle').innerHTML=`第 ${L.n} 关通关！🐱✊`;
+    const timeLeft=Math.ceil(S.time);
+    const stars = timeLeft>tot(L)/2?3: timeLeft>tot(L)/4?2:1;
+    document.getElementById('resStars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    document.getElementById('resStat').innerHTML=`本关揍飞 <b class="b">${S.score}</b> 只狗 ｜ 剩余 <b class="b">${timeLeft}</b> 秒<br>下一关狗子更快更肉，准备好了再开打`;
+    btns.innerHTML=`<button class="btn" onclick="nextLv()">进入第 ${S.lv+2} 关 →</button><br><button class="btn small ghost" onclick="restart()">重新选猫</button>`;
+  } else {
+    sFail(); S.combo=0;
+    document.getElementById('resTitle').innerHTML=`时间到！狗子没揍完 😾`;
+    document.getElementById('resStars').textContent='💢';
+    document.getElementById('resStat').innerHTML=`第 ${L.n} 关还差 <b class="b" style="color:#e05252">${L.goal-S.qi}</b> 只狗<br>小贴士：盯紧上方顺序条，只揍<b style="color:#ff7fa8">高亮的那只</b>，带护甲的要连揍两下`;
+    btns.innerHTML=`<button class="btn" onclick="intro()">🔄 再战第 ${L.n} 关</button><br><button class="btn small ghost" onclick="restart()">重新选猫</button>`;
+  }
+  show('scrResult');
+}
+function tot(L){ return L.time+(S.cat.id==='calico'?5:0); }
+function nextLv(){ S.lv++; intro(); }
+function restart(){ S.dogs.forEach(d=>d.el.remove()); S.dogs=[]; document.getElementById('myCat').innerHTML=''; document.getElementById('queueBar').style.display='none'; show('scrStart'); }
+
+function finalWin(){
+  const rank = S.total>=48?'猫界拳皇 👑':S.total>=42?'金牌揍狗官 🥇':S.total>=36?'资深猫打手 🥈':'初出茅庐猫拳手 🥉';
+  document.getElementById('resTitle').innerHTML=`🏆 五关全部通关！<br>狗子们连夜搬家了`;
+  document.getElementById('resStars').textContent='🎉🐱👑🐶💨';
+  document.getElementById('resStat').innerHTML=`累计揍飞 <b class="b">${S.total}</b> 只狗<br>称号：<b class="b" style="color:#e05252;font-size:18px">${rank}</b><br>—— 用 ${S.cat.name} 完成全制霸，狗界闻风丧胆 ——`;
+  document.getElementById('resBtns').innerHTML=`<button class="btn" onclick="restart()">🔁 再来一局</button>`;
+  show('scrResult');
+}
+
+/* 防误触：点击空白处不结算 */
+stage.addEventListener('pointerdown', e=>{ if(S.running){ S.combo=0; } });
+</script>
+</body>
+</html>
