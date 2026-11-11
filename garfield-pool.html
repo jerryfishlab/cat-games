@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>加菲撞球王 · 猫猫撞球大对决</title>
+<style>
+  :root{--ink:#3d3242;--ink2:#7a6d80;--orange:#ff9d3c;--pink:#ff7fa8;--purple:#9d7bde}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);
+    background:radial-gradient(900px 500px at 10% -10%,#ffe9d6 0%,transparent 60%),
+      radial-gradient(900px 500px at 95% 0%,#ffe1ec 0%,transparent 55%),#fff7ee;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
+  }
+  .app{width:100%;max-width:860px}
+  .screen{display:none;animation:pop .3s}
+  .screen.active{display:block}
+  @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  .card{background:#fff;border-radius:26px;padding:30px 26px;box-shadow:0 14px 36px rgba(190,140,110,.18);text-align:center}
+  h1{font-size:clamp(26px,6vw,38px);letter-spacing:2px}
+  h1 em{font-style:normal;color:var(--orange)}
+  .sub{color:var(--ink2);font-size:14px;margin-top:10px;line-height:1.9}
+  .big-emo{font-size:56px;margin:10px 0}
+  .btn{
+    display:inline-block;border:none;cursor:pointer;font-size:17px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,#ffb05c,var(--pink));padding:13px 42px;border-radius:999px;margin-top:22px;
+    box-shadow:0 8px 20px rgba(255,125,90,.35);transition:.15s;font-family:inherit
+  }
+  .btn:active{transform:scale(.96)}
+  .btn.alt{background:linear-gradient(135deg,#8fb8ea,var(--purple))}
+  .rules{background:#fff6ec;border-radius:16px;padding:14px 18px;text-align:left;font-size:13.5px;color:var(--ink2);line-height:2;margin-top:18px}
+  .rules b{color:var(--ink)}
+  /* VS 布局 */
+  .vs{display:flex;align-items:center;justify-content:center;gap:18px;margin:14px 0 6px}
+  .vs .who{width:130px}
+  .vs .who .face{font-size:52px}
+  .vs .who .nm{font-weight:800;font-size:16px;margin-top:2px}
+  .vs .x{font-size:30px;color:var(--ink2);font-weight:900}
+  .stars{color:var(--orange);font-size:18px;letter-spacing:2px}
+  .dice{color:var(--ink2);font-size:12.5px;margin-top:4px}
+  /* 游戏界面 */
+  #hud{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:18px;padding:10px 16px;box-shadow:0 8px 22px rgba(190,140,110,.15);margin-bottom:10px;flex-wrap:wrap;gap:6px}
+  .score{font-size:20px;font-weight:900;display:flex;align-items:center;gap:8px}
+  .score .num{font-size:24px;color:var(--orange)}
+  .turnTag{font-size:13px;font-weight:800;padding:5px 14px;border-radius:999px;background:#ffe1ec;color:#c2447a}
+  .turnTag.me{background:#ffe6c9;color:#c76a12}
+  .lvlTag{font-size:12.5px;color:var(--ink2)}
+  .stage{position:relative;background:#fff;border-radius:22px;padding:10px;box-shadow:0 14px 36px rgba(190,140,110,.18)}
+  canvas{display:block;width:100%;border-radius:14px;touch-action:none;cursor:crosshair}
+  #toast{
+    position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);pointer-events:none;
+    font-size:26px;font-weight:900;color:#fff;text-shadow:0 3px 10px rgba(0,0,0,.4);opacity:0;transition:.25s;white-space:nowrap
+  }
+  #toast.show{opacity:1;transform:translate(-50%,-58%)}
+  #tip{text-align:center;color:var(--ink2);font-size:12.5px;margin-top:8px}
+  #overlay{
+    position:absolute;inset:0;background:rgba(61,50,66,.55);border-radius:22px;display:none;
+    align-items:center;justify-content:center;z-index:5
+  }
+  #overlay.show{display:flex}
+  #overlay .box{background:#fff;border-radius:22px;padding:26px 34px;text-align:center;max-width:86%}
+  #overlay h2{font-size:24px}
+  #overlay p{color:var(--ink2);font-size:14px;margin-top:8px;line-height:1.9}
+  .foot{text-align:center;color:#c1b0bc;font-size:12px;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 开始页 -->
+  <div class="screen active" id="scrStart">
+    <div class="card">
+      <div class="big-emo">😼🎱</div>
+      <h1>加菲<em>撞球王</em></h1>
+      <p class="sub">一只加菲猫的撞球登顶之路<br>击败大象、狮子、老虎等 7 种猛兽，捧起猫界金球奖 🏆</p>
+      <div class="rules">
+        <b>🎯 玩法</b>：按住桌面拖动瞄准，松手出杆（拖得越远，力道越大）<br>
+        <b>✅ 得分</b>：把<b style="color:#c76a12">动物彩球</b>撞进袋口，进一颗 +1 分<br>
+        <b>❌ 失误</b>：撞进自己的<b style="color:#c76a12">橘猫球 😺</b> → 对手 +1 分<br>
+        <b>🚫 犯规</b>：白球 😼 进袋（洗袋）→ 对手 +1 分<br>
+        <b>🏆 赛制</b>：每局 <b>5 分制</b>，先到 5 分获胜；连进可连续出杆<br>
+        <b>📈 赛程</b>：共 <b>8 关</b>，每关对手随机、难度随机，全部通关即封王
+      </div>
+      <button class="btn" onclick="startGame()">开始挑战 🎱</button>
+    </div>
+  </div>
+
+  <!-- 关卡介绍 -->
+  <div class="screen" id="scrIntro">
+    <div class="card">
+      <div style="color:var(--ink2);font-size:14px;font-weight:700" id="introLv"></div>
+      <div class="vs">
+        <div class="who"><div class="face">😼</div><div class="nm">加菲（你）</div></div>
+        <div class="x">VS</div>
+        <div class="who"><div class="face" id="introFace"></div><div class="nm" id="introName"></div></div>
+      </div>
+      <div class="stars" id="introStars"></div>
+      <div class="dice">🎲 本关难度随机摇出 —— 对手枪法决定于此</div>
+      <p class="sub" id="introDesc"></p>
+      <button class="btn" onclick="beginMatch()">开球！</button>
+    </div>
+  </div>
+
+  <!-- 对局 -->
+  <div class="screen" id="scrGame">
+    <div id="hud">
+      <div class="score">😼 <span class="num" id="pScore">0</span> : <span class="num" id="oScore">0</span> <span id="oppFace">🦁</span></div>
+      <div class="turnTag me" id="turnTag">你的回合</div>
+      <div class="lvlTag" id="lvlTag"></div>
+    </div>
+    <div class="stage">
+      <canvas id="cv" width="800" height="440"></canvas>
+      <div id="toast"></div>
+      <div id="overlay"><div class="box">
+        <h2 id="ovTitle"></h2>
+        <p id="ovText"></p>
+        <button class="btn" id="ovBtn"></button>
+        <br><button class="btn alt" id="ovBtn2" style="margin-top:12px;font-size:14px;padding:9px 26px">回主菜单</button>
+      </div></div>
+    </div>
+    <div id="tip">按住桌面拖动瞄准 · 松手出杆 · 力道由拖动距离决定</div>
+  </div>
+
+  <!-- 通关 -->
+  <div class="screen" id="scrChamp">
+    <div class="card">
+      <div class="big-emo">🏆😼🎉</div>
+      <h1><em>猫界撞球王</em> 诞生！</h1>
+      <p class="sub">8 关全通，猛兽们含泪把金球奖递给了加菲<br>象：我服了　狮：下次再战　虎：溜了溜了</p>
+      <button class="btn" onclick="startGame()">再打一轮 🎱</button>
+    </div>
+  </div>
+
+  <div class="foot">加菲撞球王 · 每局对手与难度随机 🎲</div>
+</div>
+
+<script>
+/* ================= 基础配置 ================= */
+const W=800, H=440, BR=14, POKR=21, FR=0.9825, STOP=0.05, REST=0.95, MAXV=26;
+const POCKETS=[[34,34],[766,34],[400,22],[34,406],[766,406],[400,418]];
+const ANIMALS=[
+  {id:'elephant', name:'大象',   emoji:'🐘', color:'#8FA6BF', taunt:'鼻子一甩，球就进袋'},
+  {id:'lion',     name:'狮子',   emoji:'🦁', color:'#D9A441', taunt:'草原之王的杆法不容小觑'},
+  {id:'tiger',    name:'老虎',   emoji:'🐯', color:'#E8873C', taunt:'虎视眈眈，盯上了每个袋口'},
+  {id:'giraffe',  name:'长颈鹿', emoji:'🦒', color:'#E3C16E', taunt:'居高临下，看得比谁都准'},
+  {id:'hippo',    name:'河马',   emoji:'🦛', color:'#9B8FC4', taunt:'一杆重炮，势大力沉'},
+  {id:'crocodile',name:'鳄鱼',   emoji:'🐊', color:'#5FA86B', taunt:'潜伏突袭，专咬你的漏杆'},
+  {id:'wolf',     name:'狼',     emoji:'🐺', color:'#7D8A99', taunt:'独行猎手，机会主义大师'},
+];
+
+/* ================= 状态 ================= */
+let G={lvl:1, diff:0, opp:ANIMALS[0], ps:0, os:0, turn:'p', state:'idle', balls:[], pocketedShot:[], foul:false, aim:null};
+let raf=null, lastT=0, aiTimer=null;
+
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+
+/* ================= 屏幕切换 ================= */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+/* ================= 音效 ================= */
+let AC=null;
+function beep(f,d,type='sine',v=.15,slide=0){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.value=f;
+    if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),AC.currentTime+d);
+    g.gain.value=v; g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+    o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+
+/* ================= 流程 ================= */
+function startGame(){
+  G.lvl=1;
+  intro();
+}
+function intro(){
+  const lv=G.lvl;
+  G.opp=ANIMALS[Math.floor(Math.random()*ANIMALS.length)];
+  G.diff=(lv-1)+Math.random();           // 每关难度随机：区间 [lv-1, lv]
+  const st=Math.max(1,Math.round(G.diff));
+  $('introLv').textContent=`第 ${lv} 关 / 共 8 关`;
+  $('introFace').textContent=G.opp.emoji;
+  $('introName').textContent=G.opp.name;
+  $('introStars').textContent='难度 '+'★'.repeat(st)+'☆'.repeat(8-st);
+  $('introDesc').textContent=G.opp.taunt+'。枪法如何，开球见真章！';
+  show('scrIntro');
+}
+function beginMatch(){
+  G.ps=0; G.os=0; G.turn='p'; G.foul=false;
+  setupRack();
+  $('pScore').textContent=0; $('oScore').textContent=0;
+  $('oppFace').textContent=G.opp.emoji;
+  const st=Math.max(1,Math.round(G.diff));
+  $('lvlTag').textContent=`第 ${G.lvl} 关 · ${G.opp.name} ${G.opp.emoji} · 难度 ${st}/8`;
+  $('overlay').classList.remove('show');
+  setTurnUI();
+  show('scrGame');
+  if(!raf){ lastT=performance.now(); raf=requestAnimationFrame(loop); }
+  G.state='aim';
+  toast('你的回合，按住拖动瞄准！','#fff');
+}
+
+/* ================= 摆球 ================= */
+function mkBall(x,y,type,color,emoji){ return {x,y,vx:0,vy:0,type,color,emoji,alive:true}; }
+function setupRack(){
+  G.balls=[];
+  // 白球（加菲主球）
+  G.balls.push(mkBall(170,H/2,'cue','#FDFDFD','😼'));
+  // 5 橘猫球 + 5 动物球，打乱后摆三角阵
+  const types=['p','p','p','p','p','o','o','o','o','o'];
+  for(let i=types.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [types[i],types[j]]=[types[j],types[i]]; }
+  let k=0; const startX=555, gap=BR*2+3;
+  const rows=[1,2,3,4];
+  rows.forEach((n,r)=>{
+    for(let i=0;i<n;i++){
+      const x=startX+r*gap*0.87;
+      const y=H/2+(i-(n-1)/2)*gap;
+      const t=types[k++];
+      if(t==='p') G.balls.push(mkBall(x,y,'p','#FFA24D','😺'));
+      else G.balls.push(mkBall(x,y,'o',G.opp.color,G.opp.emoji));
+    }
+  });
+}
+
+/* ================= 物理 ================= */
+function allStopped(){ return G.balls.every(b=>!b.alive||Math.hypot(b.vx,b.vy)<STOP); }
+
+function physics(eff){
+  const live=G.balls.filter(b=>b.alive);
+  const maxv=Math.max(0,...live.map(b=>Math.hypot(b.vx,b.vy)));
+  const sub=Math.min(6,Math.max(1,Math.ceil(maxv*eff/7)));
+  for(let s=0;s<sub;s++){
+    const e=eff/sub, damp=Math.pow(FR,e);
+    for(const b of live){
+      if(!b.alive) continue;
+      b.x+=b.vx*e; b.y+=b.vy*e;
+      b.vx*=damp; b.vy*=damp;
+      if(Math.hypot(b.vx,b.vy)<STOP){ b.vx=0; b.vy=0; }
+      // 进袋
+      for(const [px,py] of POCKETS){
+        if(Math.hypot(b.x-px,b.y-py)<POKR){ pocketBall(b); break; }
+      }
+      if(!b.alive) continue;
+      // 墙壁（考虑边框内沿 26）
+      const L=26,R=W-26,T=26,B=H-26;
+      if(b.x<L+BR){ b.x=L+BR; b.vx=Math.abs(b.vx)*.9; }
+      if(b.x>R-BR){ b.x=R-BR; b.vx=-Math.abs(b.vx)*.9; }
+      if(b.y<T+BR){ b.y=T+BR; b.vy=Math.abs(b.vy)*.9; }
+      if(b.y>B-BR){ b.y=B-BR; b.vy=-Math.abs(b.vy)*.9; }
+    }
+    // 球间弹性碰撞
+    for(let i=0;i<live.length;i++){
+      const a=live[i]; if(!a.alive) continue;
+      for(let j=i+1;j<live.length;j++){
+        const c=live[j]; if(!c.alive) continue;
+        const dx=c.x-a.x, dy=c.y-a.y, d=Math.hypot(dx,dy);
+        if(d>0 && d<BR*2){
+          const nx=dx/d, ny=dy/d, ov=(BR*2-d)/2;
+          a.x-=nx*ov; a.y-=ny*ov; c.x+=nx*ov; c.y+=ny*ov;
+          const rel=(a.vx-c.vx)*nx+(a.vy-c.vy)*ny;
+          if(rel>0){
+            const jI=(1+REST)*rel/2;
+            a.vx-=jI*nx; a.vy-=jI*ny; c.vx+=jI*nx; c.vy+=jI*ny;
+            if(rel>4) beep(120+rel*8,.06,'triangle',.08);
+          }
+        }
+      }
+    }
+  }
+  if(allStopped()) endShot();
+}
+
+function pocketBall(b){
+  b.alive=false; b.vx=0; b.vy=0;
+  G.pocketedShot.push(b.type);
+  if(b.type==='cue'){ beep(200,.3,'sawtooth',.2,-120); toast('洗袋犯规！对手 +1','#ffb3b3'); }
+  else if(b.type==='p'){ beep(520,.12,'sine',.2); setTimeout(()=>beep(392,.16,'sine',.18),90); }
+  else { beep(660,.1,'sine',.22); setTimeout(()=>beep(880,.14,'sine',.2),80); }
+}
+
+/* ================= 回合结算 ================= */
+function endShot(){
+  const shot=G.pocketedShot; G.pocketedShot=[];
+  let gain=0, oppGain=0;
+  for(const t of shot){
+    if(t==='o') gain++;          // 动物球进袋 → 加菲得分
+    else if(t==='p') oppGain++;  // 橘猫球进袋 → 对手得分
+    else if(t==='cue'){ oppGain++; G.foul=true; respawnCue(); }
+  }
+  G.ps+=gain; G.os+=oppGain;
+  $('pScore').textContent=G.ps; $('oScore').textContent=G.os;
+
+  // 比赛结束判定
+  if(G.ps>=5 || G.os>=5){ G.state='over'; setTimeout(matchOver,700); return; }
+
+  const shooter=G.turn;
+  const keep = !G.foul && ((shooter==='p'&&gain>0)||(shooter==='o'&&oppGain>0));
+  if(keep){
+    toast(shooter==='p'?'进球！继续出杆 💪':'对手连杆！','');
+    if(shooter==='p'){ G.state='aim'; }
+    else { G.state='ai'; scheduleAI(); }
+  }else{
+    G.turn = shooter==='p' ? 'o':'p';
+    setTurnUI();
+    if(G.turn==='p'){ G.state='aim'; toast('轮到你了','#fff'); }
+    else { G.state='ai'; toast(G.opp.name+' 准备出杆…','#fff'); scheduleAI(); }
+  }
+  G.foul=false;
+}
+
+function respawnCue(){
+  let x=170,y=H/2;
+  for(let t=0;t<300;t++){
+    const ok=G.balls.every(b=>!b.alive||b.type==='cue'||Math.hypot(b.x-x,b.y-y)>BR*2.4);
+    if(ok) break;
+    x=100+Math.random()*220; y=70+Math.random()*(H-140);
+  }
+  const cue=G.balls.find(b=>b.type==='cue');
+  cue.alive=true; cue.x=x; cue.y=y; cue.vx=0; cue.vy=0;
+}
+
+function setTurnUI(){
+  const t=$('turnTag');
+  if(G.turn==='p'){ t.textContent='你的回合'; t.className='turnTag me'; }
+  else { t.textContent=G.opp.emoji+' '+G.opp.name+' 回合'; t.className='turnTag'; }
+}
+
+function matchOver(){
+  if(G.ps>=5){
+    if(G.lvl>=8){ show('scrChamp'); return; }
+    $('ovTitle').textContent='🎉 关卡胜利！';
+    $('ovText').innerHTML=`你 5 : ${G.os} 击败了${G.opp.name}${G.opp.emoji}<br>下一关对手与难度将重新随机`;
+    $('ovBtn').textContent='下一关 →';
+    $('ovBtn').onclick=()=>{ G.lvl++; $('overlay').classList.remove('show'); intro(); };
+  }else{
+    $('ovTitle').textContent='😮‍💨 本局惜败';
+    $('ovText').innerHTML=`${G.opp.name}${G.opp.emoji} 先到 5 分（${G.ps} : 5）<br>难度每局随机，重摇一局说不定更简单！`;
+    $('ovBtn').textContent='再战本关 🔁';
+    $('ovBtn').onclick=()=>{ $('overlay').classList.remove('show'); intro(); };
+  }
+  $('ovBtn2').onclick=()=>{ $('overlay').classList.remove('show'); show('scrStart'); };
+  $('overlay').classList.add('show');
+}
+
+/* ================= AI 出杆 ================= */
+function scheduleAI(){
+  clearTimeout(aiTimer);
+  aiTimer=setTimeout(aiShot, 900+Math.random()*700);
+}
+function aiShot(){
+  if(G.state!=='ai') return;
+  const cue=G.balls.find(b=>b.type==='cue');
+  const targets=G.balls.filter(b=>b.alive&&b.type==='p');
+  if(!cue.alive) respawnCue();
+  if(!targets.length){ // 没有可打目标（理论到不了），直接换手
+    G.turn='p'; setTurnUI(); G.state='aim'; return;
+  }
+  const skill=0.3+G.diff*0.085;                    // 高难度更倾向打准进球线路
+  const errDeg=Math.max(2, 15-G.diff*1.55);        // 瞄准误差：难度8≈2.6°
+  const maxP=15+G.diff*1.4;
+  let dir;
+  if(Math.random()<skill){
+    // 幽灵球瞄法：找「能把橘猫球顶进最近袋口」的击打方向
+    let best=null,bestCost=1e9;
+    for(const t of targets){
+      for(const [px,py] of POCKETS){
+        const ux=px-t.x, uy=py-t.y, ud=Math.hypot(ux,uy);
+        if(ud<1) continue;
+        const gx=t.x-ux/ud*BR*2, gy=t.y-uy/ud*BR*2;   // 接触点
+        const ax=gx-cue.x, ay=gy-cue.y, ad=Math.hypot(ax,ay);
+        if(ad<1) continue;
+        const cost=ad+ud*0.6;
+        if(cost<bestCost){ bestCost=cost; best={x:ax/ad,y:ay/ad}; }
+      }
+    }
+    dir=best||{x:1,y:0};
+  }else{
+    const t=targets[Math.floor(Math.random()*targets.length)];
+    const dx=t.x-cue.x, dy=t.y-cue.y, d=Math.hypot(dx,dy)||1;
+    dir={x:dx/d,y:dy/d};
+  }
+  // 随机误差
+  const err=(Math.random()*2-1)*errDeg*Math.PI/180;
+  const rx=dir.x*Math.cos(err)-dir.y*Math.sin(err);
+  const ry=dir.x*Math.sin(err)+dir.y*Math.cos(err);
+  const p=(0.55+Math.random()*0.45)*maxP;
+  cue.vx=rx*p; cue.vy=ry*p;
+  beep(90,.08,'square',.12);
+  G.state='rolling';
+}
+
+/* ================= 玩家瞄准 ================= */
+function canvasXY(ev){
+  const r=cv.getBoundingClientRect();
+  return {x:(ev.clientX-r.left)*cv.width/r.width, y:(ev.clientY-r.top)*cv.height/r.height};
+}
+cv.addEventListener('pointerdown',ev=>{
+  if(G.state!=='aim') return;
+  cv.setPointerCapture(ev.pointerId);
+  G.aim={sx:canvasXY(ev).x, sy:canvasXY(ev).y, cx:0, cy:0};
+});
+cv.addEventListener('pointermove',ev=>{
+  if(!G.aim||G.state!=='aim') return;
+  const p=canvasXY(ev);
+  G.aim.cx=p.x; G.aim.cy=p.y;
+});
+cv.addEventListener('pointerup',ev=>{
+  if(!G.aim||G.state!=='aim') return;
+  const cue=G.balls.find(b=>b.type==='cue');
+  const a=G.aim; G.aim=null;
+  if(!cue.alive) return;
+  const dx=cue.x-a.cx, dy=cue.y-a.cy, d=Math.hypot(dx,dy);
+  if(d<24) return;                       // 拖太短视为取消
+  const p=Math.min(MAXV, d*0.13);
+  cue.vx=dx/d*p; cue.vy=dy/d*p;
+  beep(90,.08,'square',.12);
+  G.state='rolling';
+});
+
+/* ================= 绘制 ================= */
+function loop(t){
+  const dt=Math.min(48, t-lastT); lastT=t;
+  if(G.state==='rolling') physics(dt/16.67);
+  draw();
+  raf=requestAnimationFrame(loop);
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // 木框
+  ctx.fillStyle='#8B5E3C';
+  roundRect(0,0,W,H,16); ctx.fill();
+  ctx.fillStyle='#A87650';
+  roundRect(8,8,W-16,H-16,12); ctx.fill();
+  // 台呢
+  ctx.fillStyle='#3E8E5A';
+  roundRect(26,26,W-52,H-52,8); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(W/2,H/2,60,0,7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W/4,26); ctx.lineTo(W/4,H-26); ctx.moveTo(W*3/4,26); ctx.lineTo(W*3/4,H-26); ctx.stroke();
+  // 袋口
+  for(const [px,py] of POCKETS){
+    ctx.beginPath(); ctx.arc(px,py,POKR,0,7);
+    ctx.fillStyle='#1C2B20'; ctx.fill();
+    ctx.beginPath(); ctx.arc(px,py,POKR-4,0,7);
+    ctx.fillStyle='#0E1812'; ctx.fill();
+  }
+  // 瞄准辅助线
+  if(G.aim && G.state==='aim'){
+    const cue=G.balls.find(b=>b.type==='cue'&&b.alive);
+    if(cue){
+      const dx=cue.x-G.aim.cx, dy=cue.y-G.aim.cy, d=Math.hypot(dx,dy);
+      if(d>10){
+        const ux=dx/d, uy=dy/d, len=Math.min(190, 40+d*0.6);
+        ctx.setLineDash([7,7]); ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.moveTo(cue.x+ux*BR, cue.y+uy*BR); ctx.lineTo(cue.x+ux*(BR+len), cue.y+uy*(BR+len)); ctx.stroke();
+        ctx.setLineDash([]);
+        // 力道条
+        const pw=Math.min(1, d*0.13/MAXV);
+        ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(cue.x-40,cue.y-BR-26,80,9,5); ctx.fill();
+        ctx.fillStyle= pw>.8?'#ff6b6b':(pw>.5?'#ffc94d':'#7be2a8');
+        roundRect(cue.x-38,cue.y-BR-24.5,76*pw,6,3); ctx.fill();
+      }
+    }
+  }
+  // 球
+  for(const b of G.balls){
+    if(!b.alive) continue;
+    ctx.beginPath(); ctx.arc(b.x,b.y,BR,0,7);
+    ctx.fillStyle=b.color; ctx.fill();
+    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x-BR*0.35,b.y-BR*0.4,BR*0.32,0,7);
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fill();
+    ctx.font='15px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(b.emoji, b.x, b.y+1);
+  }
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+/* ================= 飘字 ================= */
+let toastTimer=null;
+function toast(msg,color){
+  const el=$('toast');
+  el.textContent=msg; el.style.color=color||'#fff';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),1100);
+}
+</script>
+</body>
+</html>
